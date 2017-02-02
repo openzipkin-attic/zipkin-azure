@@ -19,12 +19,13 @@
 
   <groupId>io.zipkin.azure</groupId>
   <artifactId>zipkin-azure-parent</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <modules>
     <module>autoconfigure</module>
     <module>module</module>
+    <module>collector-azure-eventhub</module>
   </modules>
 
   <properties>
