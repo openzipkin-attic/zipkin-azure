@@ -14,4 +14,6 @@ the [zipkin-reporters-java](https://github.com/openzipkin/zipkin-reporter-java) 
 
 ## Collectors
 
+### EventHub Collector
+
 ## Server integration
