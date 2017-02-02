@@ -25,6 +25,7 @@
   <modules>
     <module>collector</module>
     <module>autoconfigure</module>
+    <module>azure-junit</module>
   </modules>
 
   <properties>

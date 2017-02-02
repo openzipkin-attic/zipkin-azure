@@ -11,9 +11,6 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-/**
- * Created by aliostad on 14/01/2017.
- */
 package zipkin.collector.eventhub;
 
 
@@ -179,6 +176,7 @@ public class EventHubCollector implements CollectorComponent {
       host.registerEventProcessorFactory(
           context -> new ZipkinEventProcessor(builder)
       );
+
       started = true;
     } catch (Exception e) {
       e.printStackTrace();

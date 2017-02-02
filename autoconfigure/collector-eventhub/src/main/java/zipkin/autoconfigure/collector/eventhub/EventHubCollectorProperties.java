@@ -16,10 +16,6 @@ package zipkin.autoconfigure.collector.eventhub;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import zipkin.collector.eventhub.EventHubCollector;
 
-
-/**
- * Created by aliostad on 16/01/2017.
- */
 @ConfigurationProperties("zipkin.collector.eventhub")
 public class EventHubCollectorProperties {
 

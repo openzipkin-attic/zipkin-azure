@@ -25,9 +25,6 @@ import zipkin.storage.StorageComponent;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Created by aliostad on 16/01/2017.
- */
 @Configuration
 @EnableConfigurationProperties(EventHubCollectorProperties.class)
 @Conditional(EventHubSetCondition.class)
