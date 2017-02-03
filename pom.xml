@@ -23,9 +23,8 @@
   <packaging>pom</packaging>
 
   <modules>
+    <module>collector</module>
     <module>autoconfigure</module>
-    <module>module</module>
-    <module>collector-azure-eventhub</module>
   </modules>
 
   <properties>
@@ -38,7 +37,7 @@
 
     <main.basedir>${project.basedir}</main.basedir>
 
-    <zipkin.version>1.19.4</zipkin.version>
+    <zipkin.version>1.20.0</zipkin.version>
     <zipkin-reporter.version>0.6.12</zipkin-reporter.version>
     <spring-boot.version>1.4.4.RELEASE</spring-boot.version>
   </properties>
