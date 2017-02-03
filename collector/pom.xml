@@ -32,6 +32,6 @@
   </properties>
 
   <modules>
-    <module>eventhubs</module>
+    <module>eventhub</module>
   </modules>
 </project>
