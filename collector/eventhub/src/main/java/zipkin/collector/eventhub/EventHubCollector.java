@@ -13,8 +13,6 @@
  */
 package zipkin.collector.eventhub;
 
-
-import com.microsoft.azure.eventprocessorhost.EventProcessorHost;
 import zipkin.collector.Collector;
 import zipkin.collector.CollectorComponent;
 import zipkin.collector.CollectorMetrics;
@@ -30,15 +28,18 @@ import java.util.logging.Logger;
 public class EventHubCollector implements CollectorComponent {
 
   private Builder builder;
-  private EventProcessorHost host;
+  private IEventProcessorHost host;
   private Boolean started = false;
   private Exception lastException;
 
+  private IEventProcessorHostFactory ephFactory;
+
   private static final Logger logger = Logger.getLogger(EventHubCollector.class.getName());
 
-  public EventHubCollector(Builder builder) {
-    this.builder = builder;
+  public EventHubCollector(Builder builder, IEventProcessorHostFactory factory) {
     logger.log(Level.INFO,"_____EventHubCollector_ctor_____");
+    this.builder = builder;
+    ephFactory = factory;
   }
 
   public static Builder builder() {
@@ -57,7 +58,6 @@ public class EventHubCollector implements CollectorComponent {
 
     String processorHostName = UUID.randomUUID().toString();
     String storageBlobPrefix = processorHostName;
-
 
     public Builder() {
       System.out.println("_____builder______");
@@ -119,7 +119,7 @@ public class EventHubCollector implements CollectorComponent {
     }
 
     public EventHubCollector build() {
-      return new EventHubCollector(this);
+      return new EventHubCollector(this, new EventProcessorHostFactory());
     }
   }
 
@@ -168,7 +168,7 @@ public class EventHubCollector implements CollectorComponent {
       logger.log(Level.INFO, "storageContainerName: " + builder.storageContainerName);
       logger.log(Level.INFO, "storageBlobPrefix: " + builder.storageBlobPrefix);
 
-      host = new EventProcessorHost(builder.processorHostName,
+      host = ephFactory.createNew(builder.processorHostName,
           builder.eventHubName, builder.consumerGroupName,
           builder.eventHubConnectionString, builder.storageConnectionString,
           builder.storageContainerName, builder.storageBlobPrefix);

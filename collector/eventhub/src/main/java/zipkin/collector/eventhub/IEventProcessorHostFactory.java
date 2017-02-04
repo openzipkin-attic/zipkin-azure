@@ -13,23 +13,12 @@
  */
 package zipkin.collector.eventhub;
 
-import org.junit.Test;
-import zipkin.storage.InMemoryStorage;
-import static org.junit.Assert.assertEquals;
-
-
-public class ZipkinEventProcessorTest {
-
-  static final String dummyEventHubConnectionString = "endpoint=sb://someurl.net;SharedAccessKeyName=dumbo;SharedAccessKey=uius7y8ewychsih";
-
-  @Test
-  public void canCreateZipkinEventProcessor() {
-    ZipkinEventProcessor zipkinEventProcessor = new ZipkinEventProcessor(getBuilder());
-  }
-
-  private EventHubCollector.Builder getBuilder() {
-    return EventHubCollector.builder()
-        .storage(new InMemoryStorage());
-
-  }
+public interface IEventProcessorHostFactory {
+  IEventProcessorHost createNew(String hostName,
+                                String eventHubPath,
+                                String consumerGroupName,
+                                String eventHubConnectionString,
+                                String storageConnectionString,
+                                String storageContainerName,
+                                String storageBlobPrefix);
 }

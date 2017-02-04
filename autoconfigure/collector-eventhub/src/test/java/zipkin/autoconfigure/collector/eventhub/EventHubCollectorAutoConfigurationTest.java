@@ -31,14 +31,12 @@ import zipkin.storage.StorageComponent;
 import static org.junit.Assert.*;
 import static org.springframework.boot.test.EnvironmentTestUtils.addEnvironment;
 
-// this comment has no meaning
-
 public class EventHubCollectorAutoConfigurationTest {
 
   AnnotationConfigApplicationContext context;
 
-  String dummyEventHubConnectionString = "endpoint=sb://someurl.net;SharedAccessKeyName=dumbo;SharedAccessKey=uius7y8ewychsih";
-  String dummyStorageConnectionString = "a=b;c=d";
+  static final String dummyEventHubConnectionString = "endpoint=sb://someurl.net;SharedAccessKeyName=dumbo;SharedAccessKey=uius7y8ewychsih";
+  static final String dummyStorageConnectionString = "a=b;c=d";
 
   @Rule
   public ExpectedException thrown = ExpectedException.none();
@@ -49,7 +47,7 @@ public class EventHubCollectorAutoConfigurationTest {
   }
 
   @Test
-  public void doesntProvideCollectorComponent_whenSqsQueueUrlUnset() {
+  public void doesntProvideCollectorComponent_whenEventHubConnectionStringUnset() {
     context = new AnnotationConfigApplicationContext();
     context.register(PropertyPlaceholderAutoConfiguration.class,
         EventHubCollectorProperties.class,

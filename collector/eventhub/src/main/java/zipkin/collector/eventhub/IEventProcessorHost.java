@@ -13,23 +13,13 @@
  */
 package zipkin.collector.eventhub;
 
-import org.junit.Test;
-import zipkin.storage.InMemoryStorage;
-import static org.junit.Assert.assertEquals;
+import com.microsoft.azure.eventprocessorhost.IEventProcessorFactory;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
+public interface IEventProcessorHost {
 
-public class ZipkinEventProcessorTest {
+  Future<?> registerEventProcessorFactory(IEventProcessorFactory<?> factory) throws Exception;
 
-  static final String dummyEventHubConnectionString = "endpoint=sb://someurl.net;SharedAccessKeyName=dumbo;SharedAccessKey=uius7y8ewychsih";
-
-  @Test
-  public void canCreateZipkinEventProcessor() {
-    ZipkinEventProcessor zipkinEventProcessor = new ZipkinEventProcessor(getBuilder());
-  }
-
-  private EventHubCollector.Builder getBuilder() {
-    return EventHubCollector.builder()
-        .storage(new InMemoryStorage());
-
-  }
+  void unregisterEventProcessor() throws InterruptedException, ExecutionException;
 }
