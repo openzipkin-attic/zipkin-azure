@@ -31,6 +31,8 @@ import zipkin.storage.StorageComponent;
 import static org.junit.Assert.*;
 import static org.springframework.boot.test.EnvironmentTestUtils.addEnvironment;
 
+// this comment has no meaning
+
 public class EventHubCollectorAutoConfigurationTest {
 
   AnnotationConfigApplicationContext context;
