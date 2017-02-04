@@ -13,8 +13,15 @@
  */
 package zipkin.collector.eventhub;
 
+import com.microsoft.azure.eventprocessorhost.IEventProcessorFactory;
+import com.microsoft.azure.eventprocessorhost.PartitionContext;
 import org.junit.Test;
 import zipkin.storage.InMemoryStorage;
+
+import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
 import static org.junit.Assert.assertEquals;
 
 
@@ -30,6 +37,54 @@ public class ZipkinEventProcessorTest {
   private EventHubCollector.Builder getBuilder() {
     return EventHubCollector.builder()
         .storage(new InMemoryStorage());
+  }
+
+  @Test
+  public void canCreateCollecot() {
+    EventHubCollector collector = new EventHubCollector(getBuilder(), new IEventProcessorHostFactory() {
+      @Override
+      public IEventProcessorHost createNew(String hostName, String eventHubPath, String consumerGroupName, String eventHubConnectionString, String storageConnectionString, String storageContainerName, String storageBlobPrefix) {
+        return new IEventProcessorHost() {
+          @Override
+          public Future<?> registerEventProcessorFactory(IEventProcessorFactory<?> factory) throws Exception {
+            return null;
+          }
+
+          @Override
+          public void unregisterEventProcessor() throws InterruptedException, ExecutionException {
+          }
+        };
+      }
+    });
+  }
+
+  @Test
+  public void unregisterGetsCalled_ifStopIsCalledAfterStart() throws IOException {
+
+    DummyEventProcessorHost dummy = new DummyEventProcessorHost();
+    EventHubCollector collector = new EventHubCollector(getBuilder(),
+        (hostName, eventHubPath, consumerGroupName, eventHubConnectionString, storageConnectionString, storageContainerName, storageBlobPrefix) -> dummy
+    );
+
+    collector.start();
+    collector.close();
+
+    assertEquals(true, dummy.unrergisterWasCalled);
 
   }
+
+  @Test
+  public void registerGetsCalled_AfterStart() throws IOException {
+
+    DummyEventProcessorHost dummy = new DummyEventProcessorHost();
+    EventHubCollector collector = new EventHubCollector(getBuilder(),
+      (hostName, eventHubPath, consumerGroupName, eventHubConnectionString, storageConnectionString, storageContainerName, storageBlobPrefix) -> dummy
+    );
+
+    collector.start();
+
+    assertEquals(true, dummy.rergisterWasCalled);
+  }
+
+
 }
