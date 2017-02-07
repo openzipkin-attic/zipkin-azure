@@ -27,7 +27,7 @@ public class EventHubCollectorProperties {
   private int checkpointBatchSize = 10;
 
   private String processorHostName = "";
-  private String storageBlobPrefix = getProcessorHostName();
+  private String storageBlobPrefix = "";
 
   public String getEventHubName() {
     return eventHubName;
