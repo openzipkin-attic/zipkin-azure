@@ -11,38 +11,21 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-/**
- * Created by aliostad on 14/01/2017.
- */
 package zipkin.collector.eventhub;
 
-
-import com.microsoft.azure.eventprocessorhost.EventProcessorHost;
+import java.io.IOException;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import zipkin.collector.Collector;
 import zipkin.collector.CollectorComponent;
 import zipkin.collector.CollectorMetrics;
 import zipkin.collector.CollectorSampler;
+import zipkin.internal.LazyCloseable;
 import zipkin.storage.StorageComponent;
 
-import java.io.IOException;
-import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-
-public class EventHubCollector implements CollectorComponent {
-
-  private Builder builder;
-  private EventProcessorHost host;
-  private Boolean started = false;
-  private Exception lastException;
-
-  private static final Logger logger = Logger.getLogger(EventHubCollector.class.getName());
-
-  public EventHubCollector(Builder builder) {
-    this.builder = builder;
-    logger.log(Level.INFO,"_____EventHubCollector_ctor_____");
-  }
+public final class EventHubCollector implements CollectorComponent {
 
   public static Builder builder() {
     return new Builder();
@@ -50,7 +33,6 @@ public class EventHubCollector implements CollectorComponent {
 
   public static final class Builder implements CollectorComponent.Builder {
     Collector.Builder delegate = Collector.builder(EventHubCollector.class);
-    CollectorMetrics metrics = CollectorMetrics.NOOP_METRICS;
     String eventHubName = "zipkin";
     String consumerGroupName = "$Default";
     String eventHubConnectionString;
@@ -61,152 +43,105 @@ public class EventHubCollector implements CollectorComponent {
     String processorHostName = UUID.randomUUID().toString();
     String storageBlobPrefix = processorHostName;
 
-
-    public Builder() {
-      System.out.println("_____builder______");
+    Builder() {
     }
 
-    public EventHubCollector.Builder eventHubName(String name) {
+    public Builder eventHubName(String name) {
       eventHubName = name;
       return this;
     }
 
-    public EventHubCollector.Builder consumerGroupName(String name) {
+    public Builder consumerGroupName(String name) {
       consumerGroupName = name;
       return this;
     }
 
-    public EventHubCollector.Builder checkpointBatchSize(int size) {
+    public Builder checkpointBatchSize(int size) {
       checkpointBatchSize = size;
       return this;
     }
 
-    public EventHubCollector.Builder eventHubConnectionString(String connectionString) {
+    public Builder eventHubConnectionString(String connectionString) {
       eventHubConnectionString = connectionString;
       return this;
     }
 
-    public EventHubCollector.Builder storageConnectionString(String connectionString) {
+    public Builder storageConnectionString(String connectionString) {
       storageConnectionString = connectionString;
       return this;
     }
 
-    public EventHubCollector.Builder storageContainerName(String containerName) {
+    public Builder storageContainerName(String containerName) {
       storageContainerName = containerName;
       return this;
     }
 
-    public EventHubCollector.Builder storageBlobPrefix(String blobPrefix) {
+    public Builder storageBlobPrefix(String blobPrefix) {
       storageBlobPrefix = blobPrefix;
       return this;
     }
 
-    public EventHubCollector.Builder processorHostName(String nameForThisProcessorHost) {
+    public Builder processorHostName(String nameForThisProcessorHost) {
       processorHostName = nameForThisProcessorHost;
       return this;
     }
 
-    public EventHubCollector.Builder storage(StorageComponent storage) {
+    @Override public Builder storage(StorageComponent storage) {
       delegate.storage(storage);
       return this;
     }
 
-    public EventHubCollector.Builder metrics(CollectorMetrics metrics) {
+    @Override public Builder metrics(CollectorMetrics metrics) {
       delegate.metrics(metrics);
       return this;
     }
 
-    public EventHubCollector.Builder sampler(CollectorSampler sampler) {
+    @Override public Builder sampler(CollectorSampler sampler) {
       delegate.sampler(sampler);
       return this;
     }
 
-    public EventHubCollector build() {
+    @Override public EventHubCollector build() {
       return new EventHubCollector(this);
     }
   }
 
-  public String getEventHubName() {
-    return builder.eventHubName;
+  final AtomicBoolean closed = new AtomicBoolean(false);
+  final LazyCloseable<Future<?>> lazyRegisterEventProcessor;
+
+  EventHubCollector(Builder builder) {
+    this(new LazyRegisterEventProcessor(builder));
   }
 
-  public String getConsumerGroupName() {
-    return builder.consumerGroupName;
+  EventHubCollector(LazyCloseable<Future<?>> lazyRegisterEventProcessor) {
+    this.lazyRegisterEventProcessor = lazyRegisterEventProcessor;
   }
 
-  public String getEventHubConnectionString() {
-    return builder.eventHubConnectionString;
-  }
-
-  public String getStorageConnectionString() {
-    return builder.storageConnectionString;
-  }
-
-  public String getStorageContainerName() {
-    return builder.storageContainerName;
-  }
-
-  public int getCheckpointBatchSize() {
-    return builder.checkpointBatchSize;
-  }
-
-  public String getProcessorHostName() {
-    return builder.processorHostName;
-  }
-
-  public String getStorageBlobPrefix() {
-    return builder.storageBlobPrefix;
-  }
-
-  public EventHubCollector start() {
-
-    logger.log(Level.INFO,"_____EventHubCollector_start______");
-    try {
-
-      logger.log(Level.INFO, "processorHostName: " + builder.processorHostName);
-      logger.log(Level.INFO, "consumerGroupName: " + builder.consumerGroupName);
-      logger.log(Level.INFO, "eventHubName: " + builder.eventHubName);
-      logger.log(Level.INFO, "eventHubConnectionString: " + builder.eventHubConnectionString);
-      logger.log(Level.INFO, "storageConnectionString: " + builder.storageConnectionString);
-      logger.log(Level.INFO, "storageContainerName: " + builder.storageContainerName);
-      logger.log(Level.INFO, "storageBlobPrefix: " + builder.storageBlobPrefix);
-
-      host = new EventProcessorHost(builder.processorHostName,
-          builder.eventHubName, builder.consumerGroupName,
-          builder.eventHubConnectionString, builder.storageConnectionString,
-          builder.storageContainerName, builder.storageBlobPrefix);
-
-      host.registerEventProcessorFactory(
-          context -> new ZipkinEventProcessor(builder)
-      );
-      started = true;
-    } catch (Exception e) {
-      e.printStackTrace();
-      lastException = e;
-
-      logger.log(Level.WARNING,"_____EventHubCollector_exception____");
-      System.out.println(e);
-
-    }
+  @Override public EventHubCollector start() {
+    if (!closed.get()) lazyRegisterEventProcessor.get();
     return this;
   }
 
-  public CheckResult check() {
-    logger.log(Level.INFO,"_____EventHubCollector_check____");
-    return started || lastException == null ? CheckResult.OK : CheckResult.failed(lastException);
+  @Override public CheckResult check() {
+    try {
+      // make sure compute doesn't throw an exception
+      Future<?> registrationFuture = lazyRegisterEventProcessor.get();
+      registrationFuture.get(); // make sure registration succeeded
+      return CheckResult.OK;
+    } catch (RuntimeException e) {
+      return CheckResult.failed(e);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      return CheckResult.failed(e);
+    } catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof Error) throw (Error) cause;
+      return CheckResult.failed((Exception) cause);
+    }
   }
 
-  public void close() throws IOException {
-    try {
-      logger.log(Level.INFO,"_____EventHubCollector_close_____");
-      if (host != null) {
-        host.unregisterEventProcessor();
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
-      lastException = e;
-    }
-
-    started = false;
+  @Override public void close() throws IOException {
+    if (!closed.compareAndSet(false, true)) return;
+    lazyRegisterEventProcessor.close();
   }
 }

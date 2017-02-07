@@ -13,37 +13,29 @@
  */
 package zipkin.autoconfigure.collector.eventhub;
 
+import org.springframework.boot.autoconfigure.condition.ConditionOutcome;
+import org.springframework.boot.autoconfigure.condition.SpringBootCondition;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ConditionContext;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.type.AnnotatedTypeMetadata;
 import zipkin.collector.CollectorMetrics;
 import zipkin.collector.CollectorSampler;
 import zipkin.collector.eventhub.EventHubCollector;
 import zipkin.storage.StorageComponent;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-/**
- * Created by aliostad on 16/01/2017.
- */
 @Configuration
 @EnableConfigurationProperties(EventHubCollectorProperties.class)
-@Conditional(EventHubSetCondition.class)
+@Conditional(EventHubCollectorAutoConfiguration.EventHubSetCondition.class)
 public class EventHubCollectorAutoConfiguration {
-
-  private static final Logger logger = Logger.getLogger(EventHubCollectorAutoConfiguration.class.getName());
-
 
   @Bean
   EventHubCollector eventHubCollector(EventHubCollectorProperties properties,
-                                      CollectorSampler sampler,
-                                      CollectorMetrics metrics,
-                                      StorageComponent storage) {
-
-
-    logger.log(Level.INFO,"===========EventHubCollectorAutoConfiguration==============");
+      CollectorSampler sampler,
+      CollectorMetrics metrics,
+      StorageComponent storage) {
 
     return properties.toBuilder()
         .sampler(sampler)
@@ -51,6 +43,20 @@ public class EventHubCollectorAutoConfiguration {
         .metrics(metrics)
         .build()
         .start();
+  }
+
+  static final class EventHubSetCondition extends SpringBootCondition {
+    static final String PROPERTY_NAME = "zipkin.collector.eventhub.eventHubConnectionString";
+
+    public ConditionOutcome getMatchOutcome(ConditionContext context, AnnotatedTypeMetadata a) {
+
+      String eventHubProperty = context.getEnvironment().getProperty(PROPERTY_NAME);
+      ConditionOutcome outcome = eventHubProperty == null || eventHubProperty.isEmpty() ?
+          ConditionOutcome.noMatch(PROPERTY_NAME + " isn't set") :
+          ConditionOutcome.match();
+
+      return outcome;
+    }
   }
 }
 

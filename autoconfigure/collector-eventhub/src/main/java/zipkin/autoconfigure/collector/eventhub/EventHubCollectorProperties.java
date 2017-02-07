@@ -16,10 +16,6 @@ package zipkin.autoconfigure.collector.eventhub;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import zipkin.collector.eventhub.EventHubCollector;
 
-
-/**
- * Created by aliostad on 16/01/2017.
- */
 @ConfigurationProperties("zipkin.collector.eventhub")
 public class EventHubCollectorProperties {
 
@@ -31,7 +27,7 @@ public class EventHubCollectorProperties {
   private int checkpointBatchSize = 10;
 
   private String processorHostName = "";
-  private String storageBlobPrefix = getProcessorHostName();
+  private String storageBlobPrefix = "";
 
   public String getEventHubName() {
     return eventHubName;

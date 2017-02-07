@@ -17,63 +17,76 @@ import com.microsoft.azure.eventhubs.EventData;
 import com.microsoft.azure.eventprocessorhost.CloseReason;
 import com.microsoft.azure.eventprocessorhost.IEventProcessor;
 import com.microsoft.azure.eventprocessorhost.PartitionContext;
-import zipkin.Codec;
-import zipkin.collector.Collector;
-
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import zipkin.Codec;
+import zipkin.Span;
+import zipkin.collector.Collector;
 
 import static zipkin.storage.Callback.NOOP;
 
-public class ZipkinEventProcessor implements IEventProcessor {
+// TODO: we assume this is a single-threaded processor. If not, batching logic must be changed
+final class ZipkinEventProcessor implements IEventProcessor {
+  final Logger logger;
+  final Collector collector;
+  final int checkpointBatchSize;
 
-  private static final Logger logger = Logger.getLogger(ZipkinEventProcessor.class.getName());
+  int countSinceCheckpoint = 0;
 
-  int checkpointBatchingCount = 0;
-  EventHubCollector.Builder config;
-  Collector collector;
+  ZipkinEventProcessor(Collector collector, int checkpointBatchSize) {
+    this(Logger.getLogger(ZipkinEventProcessor.class.getName()), collector, checkpointBatchSize);
+  }
 
-  public ZipkinEventProcessor(EventHubCollector.Builder builder) {
-    config = builder;
-    collector = config.delegate.build();
+  ZipkinEventProcessor(Logger logger, Collector collector, int checkpointBatchSize) {
+    this.logger = logger;
+    this.collector = collector;
+    this.checkpointBatchSize = checkpointBatchSize;
   }
 
   @Override
-  public void onOpen(PartitionContext context) throws Exception {
-    logger.log(Level.INFO,"Opened " + context.getConsumerGroupName());
+  public void onOpen(PartitionContext context) {
+    logger.log(Level.FINE, "Opened " + context.getConsumerGroupName());
   }
 
   @Override
-  public void onClose(PartitionContext context, CloseReason reason) throws Exception {
-    logger.log(Level.INFO,"Closed due to " + reason);
+  public void onClose(PartitionContext context, CloseReason reason) {
+    logger.log(Level.FINE, "Closed due to " + reason);
   }
 
   @Override
-  public void onEvents(PartitionContext context, Iterable<EventData> messages) throws Exception {
+  public void onEvents(PartitionContext context, Iterable<EventData> messages)
+      throws ExecutionException, InterruptedException {
+
+    // don't issue a write until we checkpoint or exit this callback
+    List<Span> buffer = new ArrayList<>();
+
     for (EventData data : messages) {
       byte[] bytes = data.getBody();
-      if (bytes[0] == '[') {
-        collector.acceptSpans(bytes, Codec.JSON, NOOP);
-      } else {
-        if (bytes[0] == 12 /* TType.STRUCT */) {
-          collector.acceptSpans(bytes, Codec.THRIFT, NOOP);
-        } else {
-          collector.acceptSpans(Collections.singletonList(bytes), Codec.THRIFT, NOOP);
-        }
-      }
+      buffer.addAll(bytes[0] == '[' ? Codec.JSON.readSpans(bytes) : Codec.THRIFT.readSpans(bytes));
 
-      this.checkpointBatchingCount++;
-      if ((checkpointBatchingCount % config.checkpointBatchSize) == 0) {
-        logger.log(Level.INFO,"Partition " + context.getPartitionId() + " checkpointing at " +
-            data.getSystemProperties().getOffset() + "," + data.getSystemProperties().getSequenceNumber());
+      countSinceCheckpoint += buffer.size();
+      if (countSinceCheckpoint >= checkpointBatchSize) {
+        collector.accept(buffer, NOOP);
+        buffer.clear(); // clear so we don't write the spans again
+        countSinceCheckpoint = 0;
+        if (logger.isLoggable(Level.FINE)) {
+          logger.log(Level.FINE, "Partition " + context.getPartitionId() + " checkpointing at " +
+              data.getSystemProperties().getOffset() + "," + data.getSystemProperties()
+              .getSequenceNumber());
+        }
         context.checkpoint(data);
       }
+    }
+    if (!buffer.isEmpty()) {
+      collector.accept(buffer, NOOP);
     }
   }
 
   @Override
   public void onError(PartitionContext context, Throwable error) {
-    error.printStackTrace();
+    logger.log(Level.WARNING, "Error in " + context.getConsumerGroupName(), error);
   }
 }
