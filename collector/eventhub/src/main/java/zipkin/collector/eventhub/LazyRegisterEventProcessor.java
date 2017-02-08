@@ -32,12 +32,12 @@ class LazyRegisterEventProcessor extends LazyCloseable<Future<?>> {
 
   LazyRegisterEventProcessor(EventHubCollector.Builder builder) {
     host = new EventProcessorHost(
-        builder.processorHostName,
-        builder.eventHubName,
-        builder.consumerGroupName,
-        builder.eventHubConnectionString,
+        builder.processorHost,
+        builder.name,
+        builder.consumerGroup,
+        builder.connectionString,
         builder.storageConnectionString,
-        builder.storageContainerName,
+        builder.storageContainer,
         builder.storageBlobPrefix
     );
     ZipkinEventProcessor processor =

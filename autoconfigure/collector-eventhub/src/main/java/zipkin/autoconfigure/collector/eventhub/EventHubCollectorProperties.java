@@ -18,55 +18,35 @@ import zipkin.collector.eventhub.EventHubCollector;
 
 @ConfigurationProperties("zipkin.collector.eventhub")
 public class EventHubCollectorProperties {
-
-  private String eventHubName = "zipkin";
-  private String consumerGroupName = "$Default";
-  private String eventHubConnectionString;
-  private String storageConnectionString;
-  private String storageContainerName;
+  private String name = "zipkin";
+  private String consumerGroup = "$Default";
+  private String connectionString;
   private int checkpointBatchSize = 10;
+  private String processorHost;
+  private Storage storage = new Storage();
 
-  private String processorHostName = "";
-  private String storageBlobPrefix = "";
-
-  public String getEventHubName() {
-    return eventHubName;
+  public String getName() {
+    return name;
   }
 
-  public void setEventHubName(String eventHubName) {
-    this.eventHubName = eventHubName;
+  public void setName(String name) {
+    this.name = name;
   }
 
-  public String getConsumerGroupName() {
-    return consumerGroupName;
+  public String getConsumerGroup() {
+    return consumerGroup;
   }
 
-  public void setConsumerGroupName(String consumerGroupName) {
-    this.consumerGroupName = consumerGroupName;
+  public void setConsumerGroup(String consumerGroup) {
+    this.consumerGroup = consumerGroup;
   }
 
-  public String getEventHubConnectionString() {
-    return eventHubConnectionString;
+  public String getConnectionString() {
+    return connectionString;
   }
 
-  public void setEventHubConnectionString(String eventHubConnectionString) {
-    this.eventHubConnectionString = eventHubConnectionString;
-  }
-
-  public String getStorageConnectionString() {
-    return storageConnectionString;
-  }
-
-  public void setStorageConnectionString(String storageConnectionString) {
-    this.storageConnectionString = storageConnectionString;
-  }
-
-  public String getStorageContainerName() {
-    return storageContainerName;
-  }
-
-  public void setStorageContainerName(String storageContainerName) {
-    this.storageContainerName = storageContainerName;
+  public void setConnectionString(String connectionString) {
+    this.connectionString = connectionString;
   }
 
   public int getCheckpointBatchSize() {
@@ -77,49 +57,80 @@ public class EventHubCollectorProperties {
     this.checkpointBatchSize = checkpointBatchSize;
   }
 
-  public String getProcessorHostName() {
-    return processorHostName;
+  public String getProcessorHost() {
+    return processorHost;
   }
 
-  public void setProcessorHostName(String processorHostName) {
-    this.processorHostName = processorHostName;
+  public void setProcessorHost(String processorHost) {
+    this.processorHost = processorHost;
   }
 
-  public String getStorageBlobPrefix() {
-    return storageBlobPrefix;
+  public Storage getStorage() {
+    return storage;
   }
 
-  public void setStorageBlobPrefix(String storageBlobPrefix) {
-    this.storageBlobPrefix = storageBlobPrefix;
+  public void setStorage(
+      Storage storage) {
+    this.storage = storage;
+  }
+
+  public static class Storage {
+    private String connectionString;
+    private String container;
+    private String blobPrefix;
+
+    public String getConnectionString() {
+      return connectionString;
+    }
+
+    public void setConnectionString(String connectionString) {
+      this.connectionString = connectionString;
+    }
+
+    public String getContainer() {
+      return container;
+    }
+
+    public void setContainer(String container) {
+      this.container = container;
+    }
+
+    public String getBlobPrefix() {
+      return blobPrefix;
+    }
+
+    public void setBlobPrefix(String blobPrefix) {
+      this.blobPrefix = blobPrefix;
+    }
   }
 
   public EventHubCollector.Builder toBuilder() {
     EventHubCollector.Builder builder = EventHubCollector.builder()
-        .eventHubConnectionString(eventHubConnectionString)
-        .storageConnectionString(storageConnectionString);
+        .connectionString(connectionString)
+        .storageConnectionString(storage.connectionString);
 
-    if (notEmpty(storageBlobPrefix)) {
-      builder = builder.storageBlobPrefix(storageBlobPrefix);
+    if (notEmpty(getStorage().blobPrefix)) {
+      builder = builder.storageBlobPrefix(storage.blobPrefix);
     }
 
-    if (notEmpty(processorHostName)) {
-      builder = builder.processorHostName(processorHostName);
+    if (notEmpty(processorHost)) {
+      builder = builder.processorHost(processorHost);
     }
 
     if (checkpointBatchSize > 0) {
       builder = builder.checkpointBatchSize(checkpointBatchSize);
     }
 
-    if (notEmpty(consumerGroupName)) {
-      builder = builder.consumerGroupName(consumerGroupName);
+    if (notEmpty(consumerGroup)) {
+      builder = builder.consumerGroup(consumerGroup);
     }
 
-    if (notEmpty(eventHubName)) {
-      builder = builder.eventHubName(eventHubName);
+    if (notEmpty(name)) {
+      builder = builder.name(name);
     }
 
-    if (notEmpty(storageContainerName)) {
-      builder = builder.storageContainerName(storageContainerName);
+    if (notEmpty(getStorage().container)) {
+      builder = builder.storageContainer(storage.container);
     }
 
     return builder;
