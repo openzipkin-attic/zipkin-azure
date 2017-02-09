@@ -33,56 +33,55 @@ public final class EventHubCollector implements CollectorComponent {
 
   public static final class Builder implements CollectorComponent.Builder {
     Collector.Builder delegate = Collector.builder(EventHubCollector.class);
-    String eventHubName = "zipkin";
-    String consumerGroupName = "$Default";
-    String eventHubConnectionString;
-    String storageConnectionString;
-    String storageContainerName = "zipkin";
+    String name = "zipkin";
+    String consumerGroup = "$Default";
+    String connectionString;
+    String processorHost = UUID.randomUUID().toString();
     int checkpointBatchSize = 10;
-
-    String processorHostName = UUID.randomUUID().toString();
-    String storageBlobPrefix = processorHostName;
+    String storageConnectionString;
+    String storageContainer = "zipkin";
+    String storageBlobPrefix = processorHost;
 
     Builder() {
     }
 
-    public Builder eventHubName(String name) {
-      eventHubName = name;
+    public Builder name(String name) {
+      this.name = name;
       return this;
     }
 
-    public Builder consumerGroupName(String name) {
-      consumerGroupName = name;
+    public Builder consumerGroup(String name) {
+      this.consumerGroup = name;
       return this;
     }
 
     public Builder checkpointBatchSize(int size) {
-      checkpointBatchSize = size;
+      this.checkpointBatchSize = size;
       return this;
     }
 
-    public Builder eventHubConnectionString(String connectionString) {
-      eventHubConnectionString = connectionString;
+    public Builder connectionString(String connectionString) {
+      this.connectionString = connectionString;
       return this;
     }
 
-    public Builder storageConnectionString(String connectionString) {
-      storageConnectionString = connectionString;
+    public Builder storageConnectionString(String storageConnectionString) {
+      this.storageConnectionString = storageConnectionString;
       return this;
     }
 
-    public Builder storageContainerName(String containerName) {
-      storageContainerName = containerName;
+    public Builder storageContainer(String storageContainer) {
+      this.storageContainer = storageContainer;
       return this;
     }
 
-    public Builder storageBlobPrefix(String blobPrefix) {
-      storageBlobPrefix = blobPrefix;
+    public Builder storageBlobPrefix(String storageBlobPrefix) {
+      this.storageBlobPrefix = storageBlobPrefix;
       return this;
     }
 
-    public Builder processorHostName(String nameForThisProcessorHost) {
-      processorHostName = nameForThisProcessorHost;
+    public Builder processorHost(String processorHost) {
+      this.processorHost = processorHost;
       return this;
     }
 

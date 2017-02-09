@@ -36,7 +36,7 @@ public class EventHubCollectorAutoConfigurationTest {
 
   AnnotationConfigApplicationContext context;
 
-  static final String dummyEventHubConnectionString =
+  static final String dummyConnectionString =
       "endpoint=sb://someurl.net;SharedAccessKeyName=dumbo;SharedAccessKey=uius7y8ewychsih";
   static final String dummyStorageConnectionString = "UseDevelopmentStorage=true";
 
@@ -49,7 +49,7 @@ public class EventHubCollectorAutoConfigurationTest {
   }
 
   @Test
-  public void doesntProvideCollectorComponent_whenEventHubConnectionStringUnset() {
+  public void doesntProvideCollectorComponent_whenConnectionStringUnset() {
     context = new AnnotationConfigApplicationContext();
     context.register(PropertyPlaceholderAutoConfiguration.class,
         EventHubCollectorProperties.class,
@@ -62,80 +62,80 @@ public class EventHubCollectorAutoConfigurationTest {
   }
 
   @Test
-  public void providesCollectorComponent_whenEventHubConnectionStringIsSet() {
+  public void providesCollectorComponent_whenConnectionStringIsSet() {
     context = new AnnotationConfigApplicationContext();
     addEnvironment(context,
-        "zipkin.collector.eventhub.eventHubConnectionString:" + dummyEventHubConnectionString);
+        "zipkin.collector.eventhub.connection-string:" + dummyConnectionString);
     addEnvironment(context,
-        "zipkin.collector.eventhub.storageConnectionString:" + dummyStorageConnectionString);
+        "zipkin.collector.eventhub.storage.connection-string:" + dummyStorageConnectionString);
     context.register(PropertyPlaceholderAutoConfiguration.class,
         EventHubCollectorAutoConfiguration.class,
         InMemoryConfiguration.class);
     context.refresh();
 
     EventHubCollectorProperties props = context.getBean(EventHubCollectorProperties.class);
-    assertEquals(dummyEventHubConnectionString, props.getEventHubConnectionString());
-    assertEquals(dummyStorageConnectionString, props.getStorageConnectionString());
+    assertEquals(dummyConnectionString, props.getConnectionString());
+    assertEquals(dummyStorageConnectionString, props.getStorage().getConnectionString());
   }
 
   @Test
-  public void provideCollectorComponent_canSetConsumerGroupName() {
+  public void provideCollectorComponent_canSetConsumerGroup() {
 
-    String consumerGroupName = "pashmak";
+    String consumerGroup = "pashmak";
 
     context = new AnnotationConfigApplicationContext();
     addEnvironment(context,
-        "zipkin.collector.eventhub.eventHubConnectionString:" + dummyEventHubConnectionString);
+        "zipkin.collector.eventhub.connection-string:" + dummyConnectionString);
     addEnvironment(context,
-        "zipkin.collector.eventhub.storageConnectionString:" + dummyStorageConnectionString);
-    addEnvironment(context, "zipkin.collector.eventhub.consumerGroupName:" + consumerGroupName);
+        "zipkin.collector.eventhub.storage.connection-string:" + dummyStorageConnectionString);
+    addEnvironment(context, "zipkin.collector.eventhub.consumer-group:" + consumerGroup);
     context.register(PropertyPlaceholderAutoConfiguration.class,
         EventHubCollectorAutoConfiguration.class,
         InMemoryConfiguration.class);
     context.refresh();
 
     EventHubCollectorProperties props = context.getBean(EventHubCollectorProperties.class);
-    assertEquals(consumerGroupName, props.getConsumerGroupName());
+    assertEquals(consumerGroup, props.getConsumerGroup());
   }
 
   @Test
-  public void provideCollectorComponent_canSetEventHubName() {
+  public void provideCollectorComponent_canSetName() {
 
-    String eventHubName = "pashmak";
+    String name = "pashmak";
 
     context = new AnnotationConfigApplicationContext();
     addEnvironment(context,
-        "zipkin.collector.eventhub.eventHubConnectionString:" + dummyEventHubConnectionString);
+        "zipkin.collector.eventhub.connection-string:" + dummyConnectionString);
     addEnvironment(context,
-        "zipkin.collector.eventhub.storageConnectionString:" + dummyStorageConnectionString);
-    addEnvironment(context, "zipkin.collector.eventhub.eventHubName:" + eventHubName);
+        "zipkin.collector.eventhub.storage.connection-string:" + dummyStorageConnectionString);
+    addEnvironment(context, "zipkin.collector.eventhub.name:" + name);
     context.register(PropertyPlaceholderAutoConfiguration.class,
         EventHubCollectorAutoConfiguration.class,
         InMemoryConfiguration.class);
     context.refresh();
 
     EventHubCollectorProperties props = context.getBean(EventHubCollectorProperties.class);
-    assertEquals(eventHubName, props.getEventHubName());
+    assertEquals(name, props.getName());
   }
 
   @Test
-  public void provideCollectorComponent_canSetProcessorHostName() {
+  public void provideCollectorComponent_canSetProcessorHost() {
 
-    String processorHostName = "pashmak";
+    String processorHost = "pashmak";
 
     context = new AnnotationConfigApplicationContext();
     addEnvironment(context,
-        "zipkin.collector.eventhub.eventHubConnectionString:" + dummyEventHubConnectionString);
+        "zipkin.collector.eventhub.connection-string:" + dummyConnectionString);
     addEnvironment(context,
-        "zipkin.collector.eventhub.storageConnectionString:" + dummyStorageConnectionString);
-    addEnvironment(context, "zipkin.collector.eventhub.processorHostName:" + processorHostName);
+        "zipkin.collector.eventhub.storage.connection-string:" + dummyStorageConnectionString);
+    addEnvironment(context, "zipkin.collector.eventhub.processor-host:" + processorHost);
     context.register(PropertyPlaceholderAutoConfiguration.class,
         EventHubCollectorAutoConfiguration.class,
         InMemoryConfiguration.class);
     context.refresh();
 
     EventHubCollectorProperties props = context.getBean(EventHubCollectorProperties.class);
-    assertEquals(processorHostName, props.getProcessorHostName());
+    assertEquals(processorHost, props.getProcessorHost());
   }
 
   @Test
@@ -145,38 +145,38 @@ public class EventHubCollectorAutoConfigurationTest {
 
     context = new AnnotationConfigApplicationContext();
     addEnvironment(context,
-        "zipkin.collector.eventhub.eventHubConnectionString:" + dummyEventHubConnectionString);
+        "zipkin.collector.eventhub.connection-string:" + dummyConnectionString);
     addEnvironment(context,
-        "zipkin.collector.eventhub.storageConnectionString:" + dummyStorageConnectionString);
-    addEnvironment(context, "zipkin.collector.eventhub.storageBlobPrefix:" + storageBlobPrefix);
+        "zipkin.collector.eventhub.storage.connection-string:" + dummyStorageConnectionString);
+    addEnvironment(context, "zipkin.collector.eventhub.storage.blob-prefix:" + storageBlobPrefix);
     context.register(PropertyPlaceholderAutoConfiguration.class,
         EventHubCollectorAutoConfiguration.class,
         InMemoryConfiguration.class);
     context.refresh();
 
     EventHubCollectorProperties props = context.getBean(EventHubCollectorProperties.class);
-    assertEquals(storageBlobPrefix, props.getStorageBlobPrefix());
+    assertEquals(storageBlobPrefix, props.getStorage().getBlobPrefix());
   }
 
   @Test
-  public void provideCollectorComponent_canSetStorageContainerName() {
+  public void provideCollectorComponent_canSetStorageContainer() {
 
-    String storageContainerName = "pashmak";
+    String storageContainer = "pashmak";
 
     context = new AnnotationConfigApplicationContext();
     addEnvironment(context,
-        "zipkin.collector.eventhub.eventHubConnectionString:" + dummyEventHubConnectionString);
+        "zipkin.collector.eventhub.connection-string:" + dummyConnectionString);
     addEnvironment(context,
-        "zipkin.collector.eventhub.storageConnectionString:" + dummyStorageConnectionString);
+        "zipkin.collector.eventhub.storage.connection-string:" + dummyStorageConnectionString);
     addEnvironment(context,
-        "zipkin.collector.eventhub.storageContainerName:" + storageContainerName);
+        "zipkin.collector.eventhub.storage.container:" + storageContainer);
     context.register(PropertyPlaceholderAutoConfiguration.class,
         EventHubCollectorAutoConfiguration.class,
         InMemoryConfiguration.class);
     context.refresh();
 
     EventHubCollectorProperties props = context.getBean(EventHubCollectorProperties.class);
-    assertEquals(storageContainerName, props.getStorageContainerName());
+    assertEquals(storageContainer, props.getStorage().getContainer());
   }
 
   @Test
@@ -186,9 +186,9 @@ public class EventHubCollectorAutoConfigurationTest {
 
     context = new AnnotationConfigApplicationContext();
     addEnvironment(context,
-        "zipkin.collector.eventhub.eventHubConnectionString:" + dummyEventHubConnectionString);
+        "zipkin.collector.eventhub.connection-string:" + dummyConnectionString);
     addEnvironment(context,
-        "zipkin.collector.eventhub.storageConnectionString:" + dummyStorageConnectionString);
+        "zipkin.collector.eventhub.storage.connection-string:" + dummyStorageConnectionString);
     addEnvironment(context,
         "zipkin.collector.eventhub.checkpoint-batch-size:" + checkpointBatchSize);
     context.register(PropertyPlaceholderAutoConfiguration.class,

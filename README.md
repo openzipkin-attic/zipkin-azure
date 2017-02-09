@@ -43,18 +43,22 @@ You may then delete the jar itself.
 Download the latest zipkin-server jar (which is named zipkin.jar) from [here](https://search.maven.org/remote_content?g=io.zipkin.java&a=zipkin-server&v=LATEST&c=exec). For more information visit [zipkin-server homepage](https://github.com/openzipkin/zipkin/tree/master/zipkin-server).  
 
 ### 4- create an `application.properties` file for configuration next to the zipkin.jar file
-Populate the configuration - make sure the resources (Azure Storage, Event Hub, etc) exist. **Only storageConnectionString is mandatory** the rest are optional and must be used only to override the defaults:
+Populate the configuration - make sure the resources (Azure Storage, Event Hub, etc) exist.
+
+**zipkin.collector.eventhub.storage.connection-string is mandatory**
+the rest are optional and must be used only to override the defaults:
+
 ```
-zipkin.collector.eventhub.storageConnectionString=<azure storage connection string>
-zipkin.collector.eventhub.eventHubName=<name of the eventhub, default is zipkin>
-zipkin.collector.eventhub.consumerGroupName=<name of the consumer group, default is $Default>
-zipkin.collector.eventhub.storageContainerName=<name of the storage container, default is zipkin>
-zipkin.collector.eventhub.processorHostName=<name of the processor host, default is a randomly generated GUID>
-zipkin.collector.eventhub.storageBlobPrefix=<the path within container where blobs are created for partition lease, processorHostName>
+zipkin.collector.eventhub.name=<name of the eventhub, default is zipkin>
+zipkin.collector.eventhub.consumer-group=<name of the consumer group, default is $Default>
+zipkin.collector.eventhub.processor-host=<name of the processor host, default is a randomly generated GUID>
+zipkin.collector.eventhub.storage.connection-string=<azure storage connection string>
+zipkin.collector.eventhub.storage.container=<name of the storage container, default is zipkin>
+zipkin.collector.eventhub.storage.blob-prefix=<the path within container where blobs are created for partition lease, processorHost>
 ```
 
 ### 5- Run the server along with the collector
 Assuming `zipkin.jar` and `application.properties` are in the current working directory. Note that the EventHub connection string gets passed as a command-line parameter, not from the `application.properties` file:
 ```
-java -Dloader.path=/where/jar/was/unpackaged -cp zipkin.jar org.springframework.boot.loader.PropertiesLauncher --spring.config.location=application.properties --zipkin.collector.eventhub.eventHubConnectionString="<eventhub connection string, make sure quoted otherwise won't work>"
+java -Dloader.path=/where/jar/was/unpackaged -cp zipkin.jar org.springframework.boot.loader.PropertiesLauncher --spring.config.location=application.properties --zipkin.collector.eventhub.connection-string="<eventhub connection string, make sure quoted otherwise won't work>"
 ```
