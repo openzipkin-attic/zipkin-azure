@@ -13,52 +13,73 @@ the [zipkin-reporters-java](https://github.com/openzipkin/zipkin-reporter-java) 
 ## Senders
 
 ## Collectors
+Zipkin collectors receives and decodes span messages from a source. These
+spans are later stored.
 
-### Azure Event Hub Collector
-The Zipkin Azure Event Hub Collector is an alternative to Kafka. The [Azure Event Hub](https://azure.microsoft.com/en-us/services/event-hubs/) service is similar to Apache Kafka where data is be pushed to a sink. On the other hand, single consumer reads from a partition have ordering guarantees. These partitions are check pointed on regular intervals.
-
-See **Server Integration** for more info how to run it.
+Collector | Description
+--- | --- | ---
+[Event Hub](./collector/eventhub) | An alternative to Kafka.
 
 ## Server integration
-In order to integrate with zipkin-server, you need to use properties launcher to load your collector (or sender) alongside the zipkin-server process.
+In order to integrate with zipkin-server, you need to use properties
+launcher to load your collector (or sender) alongside the zipkin-server
+process.
 
-Here's an example of integrating the Azure Event Hub Collector:
+To integrate a module with a Zipkin server, you need to:
+* add an extracted module directory to the `loader.path`
+* enable the profile associated with that module
+* launch Zipkin with `PropertiesLauncher`
 
-### 1- Clone the source and build
+Each module will also have different minimum variables that need to be set.
+
+Ex.
+```
+$ java -Dloader.path=eventhub -Dspring.profiles.active=eventhub -cp zipkin.jar org.springframework.boot.loader.PropertiesLauncher
+```
+
+TODO: Until distributions are published, we can't write instructions to
+simply download modules. Until then, users will have to build locally.
+
+## Building locally
+
+Here's an example of building and integrating the Azure Event Hub Collector:
+
+### Step 1: Download zipkin-server jar
+Download the [latest released server](https://search.maven.org/remote_content?g=io.zipkin.java&a=zipkin-server&v=LATEST&c=exec) as zipkin.jar:
+
+```
+cd /tmp
+wget -O zipkin.jar 'https://search.maven.org/remote_content?g=io.zipkin.java&a=zipkin-server&v=LATEST&c=exec'
+```
+
+### Step 2: Build the Event Hub module
 Until the first version is published, you need to build the collector locally.
 ``` bash
 git clone https://github.com/openzipkin/zipkin-azure.git
-cd zipkin-azure
-./mvnw package
+(cd zipkin-azure && ./mvnw package)
 ```
 
-### 2- Unpackage MODULE jar into an empty folder
-copy zipkin-collector-eventhub-autoconfig-x.x.x-SNAPSHOT-module.jar (that has been package in the `target` folder) into an empty folder and unpackage
+This should result in a file like:
+`zipkin-azure/autoconfigure/collector-eventhub/target/zipkin-collector-eventhub-autoconfig-x.x.x-SNAPSHOT-module.jar`
+
+### Step 3: Extract the Event Hub module into a subdirectory
+The Event Hub module should be in a different directory than where you put zipkin.jar.
+It is easiest to create a directory named "eventhub" relative to zipkin.jar
+
 ``` bash
-jar xf zipkin-collector-eventhub-autoconfig-0.1.0-SNAPSHOT-module.jar
-```
-You may then delete the jar itself.
-
-### 3- Download zipkin-server jar
-Download the latest zipkin-server jar (which is named zipkin.jar) from [here](https://search.maven.org/remote_content?g=io.zipkin.java&a=zipkin-server&v=LATEST&c=exec). For more information visit [zipkin-server homepage](https://github.com/openzipkin/zipkin/tree/master/zipkin-server).  
-
-### 4- create an `application.properties` file for configuration next to the zipkin.jar file
-Populate the configuration - make sure the resources (Azure Storage, Event Hub, etc) exist.
-
-**zipkin.collector.eventhub.storage.connection-string is mandatory**
-the rest are optional and must be used only to override the defaults:
-
-```
-zipkin.collector.eventhub.name=<name of the eventhub, default is zipkin>
-zipkin.collector.eventhub.consumer-group=<name of the consumer group, default is $Default>
-zipkin.collector.eventhub.processor-host=<name of the processor host, default is a randomly generated GUID>
-zipkin.collector.eventhub.storage.connection-string=<azure storage connection string>
-zipkin.collector.eventhub.storage.container=<name of the storage container, default is zipkin>
-zipkin.collector.eventhub.storage.blob-prefix=<the path within container where blobs are created for partition lease, processorHost>
+cd /tmp
+mkdir eventhub
+(cd eventhub && jar -xf ../zipkin-azure/autoconfigure/collector-eventhub/target/*module.jar)
 ```
 
-### 5- Run the server along with the collector
-Assuming `zipkin.jar` and `application.properties` are in the current working directory. Note that the EventHub connection string gets passed as a command-line parameter, not from the `application.properties` file:
-```
-java -Dloader.path=/where/jar/was/unpackaged -cp zipkin.jar org.springframework.boot.loader.PropertiesLauncher --spring.config.location=application.properties --zipkin.collector.eventhub.connection-string="<eventhub connection string, make sure quoted otherwise won't work>"
+### Step 4: Run the server with the "eventhub" profile active
+When you enable the "eventhub" profile, you can configure eventhub with
+short environment variables similar to other [Zipkin integrations](https://github.com/openzipkin/zipkin/blob/master/zipkin-server/README.md#elasticsearch-storage).
+
+TODO: realistic values
+``` bash
+cd /tmp
+EVENTHUB_CONNECTION_STRING=foo
+EVENTHUB_STORAGE_CONNECTION_STRING=bar
+java -Dloader.path=eventhub -Dspring.profiles.active=eventhub -cp zipkin.jar org.springframework.boot.loader.PropertiesLauncher
 ```

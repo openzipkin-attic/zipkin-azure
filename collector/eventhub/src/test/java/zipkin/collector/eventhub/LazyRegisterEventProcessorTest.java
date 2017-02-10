@@ -150,7 +150,7 @@ public class LazyRegisterEventProcessorTest {
 
   class TestLazyRegisterEventProcessor extends LazyRegisterEventProcessor {
     TestLazyRegisterEventProcessor() {
-      super(EventHubCollector.builder()
+      super(EventHubCollector.newBuilder()
           .connectionString(
               "endpoint=sb://someurl.net;SharedAccessKeyName=dumbo;SharedAccessKey=uius7y8ewychsih")
           .storageConnectionString("UseDevelopmentStorage=true")

@@ -27,12 +27,12 @@ import zipkin.collector.eventhub.EventHubCollector;
 import zipkin.storage.StorageComponent;
 
 @Configuration
-@EnableConfigurationProperties(EventHubCollectorProperties.class)
-@Conditional(EventHubCollectorAutoConfiguration.EventHubSetCondition.class)
-public class EventHubCollectorAutoConfiguration {
+@EnableConfigurationProperties(ZipkinEventHubCollectorProperties.class)
+@Conditional(ZipkinEventHubCollectorAutoConfiguration.EventHubSetCondition.class)
+public class ZipkinEventHubCollectorAutoConfiguration {
 
   @Bean
-  EventHubCollector eventHubCollector(EventHubCollectorProperties properties,
+  EventHubCollector eventHubCollector(ZipkinEventHubCollectorProperties properties,
       CollectorSampler sampler,
       CollectorMetrics metrics,
       StorageComponent storage) {
