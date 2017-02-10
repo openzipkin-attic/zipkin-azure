@@ -47,10 +47,3 @@ set via `EventHubCollector.Builder`.
 You can also use this component directly in Spring Boot applications, by
 depending on [io.zipkin.azure:zipkin-autoconfigure-collector-eventhub](../../autoconfigure/zipkin-autoconfigure-collector-eventhub)
 In this case, properties prefixed with "zipkin.collector.eventhub" configure the integration.
-
-The most common configuration is where this is integrated with a Zipkin server
-
-The most common configuration is direct server integration via the
-Attribute | Property | Description | Fix
---- | --- | --- | ---
-applyTimestampAndDuration | apply-timestamp-and-duration | Backfill span.timestamp and duration based on annotations. Defaults to true | [Use zipkin-finagle](https://github.com/openzipkin/zipkin-finagle/issues/10)
