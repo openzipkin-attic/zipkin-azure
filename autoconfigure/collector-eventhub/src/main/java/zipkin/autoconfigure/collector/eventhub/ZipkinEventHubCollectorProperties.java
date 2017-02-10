@@ -17,11 +17,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import zipkin.collector.eventhub.EventHubCollector;
 
 @ConfigurationProperties("zipkin.collector.eventhub")
-public class EventHubCollectorProperties {
-  private String name = "zipkin";
-  private String consumerGroup = "$Default";
+public class ZipkinEventHubCollectorProperties {
+  private String name;
+  private String consumerGroup;
   private String connectionString;
-  private int checkpointBatchSize = 10;
+  private Integer checkpointBatchSize;
   private String processorHost;
   private Storage storage = new Storage();
 
@@ -30,7 +30,7 @@ public class EventHubCollectorProperties {
   }
 
   public void setName(String name) {
-    this.name = name;
+    this.name = emptyToNull(name);
   }
 
   public String getConsumerGroup() {
@@ -38,7 +38,7 @@ public class EventHubCollectorProperties {
   }
 
   public void setConsumerGroup(String consumerGroup) {
-    this.consumerGroup = consumerGroup;
+    this.consumerGroup = emptyToNull(consumerGroup);
   }
 
   public String getConnectionString() {
@@ -46,15 +46,15 @@ public class EventHubCollectorProperties {
   }
 
   public void setConnectionString(String connectionString) {
-    this.connectionString = connectionString;
+    this.connectionString = emptyToNull(connectionString);
   }
 
-  public int getCheckpointBatchSize() {
+  public Integer getCheckpointBatchSize() {
     return checkpointBatchSize;
   }
 
   public void setCheckpointBatchSize(int checkpointBatchSize) {
-    this.checkpointBatchSize = checkpointBatchSize;
+    if (checkpointBatchSize > 0) this.checkpointBatchSize = checkpointBatchSize;
   }
 
   public String getProcessorHost() {
@@ -62,16 +62,15 @@ public class EventHubCollectorProperties {
   }
 
   public void setProcessorHost(String processorHost) {
-    this.processorHost = processorHost;
+    this.processorHost = emptyToNull(processorHost);
   }
 
   public Storage getStorage() {
     return storage;
   }
 
-  public void setStorage(
-      Storage storage) {
-    this.storage = storage;
+  public void setStorage(Storage storage) {
+    if (storage != null) this.storage = storage;
   }
 
   public static class Storage {
@@ -84,7 +83,7 @@ public class EventHubCollectorProperties {
     }
 
     public void setConnectionString(String connectionString) {
-      this.connectionString = connectionString;
+      this.connectionString = emptyToNull(connectionString);
     }
 
     public String getContainer() {
@@ -92,7 +91,7 @@ public class EventHubCollectorProperties {
     }
 
     public void setContainer(String container) {
-      this.container = container;
+      this.container = emptyToNull(container);
     }
 
     public String getBlobPrefix() {
@@ -100,43 +99,24 @@ public class EventHubCollectorProperties {
     }
 
     public void setBlobPrefix(String blobPrefix) {
-      this.blobPrefix = blobPrefix;
+      this.blobPrefix = emptyToNull(blobPrefix);
     }
   }
 
-  public EventHubCollector.Builder toBuilder() {
-    EventHubCollector.Builder builder = EventHubCollector.builder()
-        .connectionString(connectionString)
-        .storageConnectionString(storage.connectionString);
-
-    if (notEmpty(getStorage().blobPrefix)) {
-      builder = builder.storageBlobPrefix(storage.blobPrefix);
-    }
-
-    if (notEmpty(processorHost)) {
-      builder = builder.processorHost(processorHost);
-    }
-
-    if (checkpointBatchSize > 0) {
-      builder = builder.checkpointBatchSize(checkpointBatchSize);
-    }
-
-    if (notEmpty(consumerGroup)) {
-      builder = builder.consumerGroup(consumerGroup);
-    }
-
-    if (notEmpty(name)) {
-      builder = builder.name(name);
-    }
-
-    if (notEmpty(getStorage().container)) {
-      builder = builder.storageContainer(storage.container);
-    }
-
-    return builder;
+  EventHubCollector.Builder toBuilder() {
+    EventHubCollector.Builder result = EventHubCollector.newBuilder();
+    if (name != null) result.name(name);
+    if (consumerGroup != null) result.consumerGroup(consumerGroup);
+    if (connectionString != null) result.connectionString(connectionString);
+    if (checkpointBatchSize != null) result.checkpointBatchSize(checkpointBatchSize);
+    if (processorHost != null) result.processorHost(processorHost);
+    if (storage.connectionString != null) result.storageConnectionString(storage.connectionString);
+    if (storage.container != null) result.storageConnectionString(storage.container);
+    if (storage.blobPrefix != null) result.storageConnectionString(storage.blobPrefix);
+    return result;
   }
 
-  private static boolean notEmpty(String s) {
-    return !(s == null || s.isEmpty());
+  private static String emptyToNull(String s) {
+    return (s != null && !s.isEmpty()) ? s : null;
   }
 }

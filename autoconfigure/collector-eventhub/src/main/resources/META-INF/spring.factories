@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-zipkin.autoconfigure.collector.eventhub.EventHubCollectorAutoConfiguration
+zipkin.autoconfigure.collector.eventhub.ZipkinEventHubCollectorAutoConfiguration

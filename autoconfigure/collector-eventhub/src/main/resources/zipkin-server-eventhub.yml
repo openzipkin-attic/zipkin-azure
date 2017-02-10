@@ -1,0 +1,13 @@
+# When enabled, this allows shorter env properties (ex -Dspring.profiles.active=eventhub)
+zipkin:
+  collector:
+    eventhub:
+      name: ${EVENTHUB_NAME:}
+      consumer-group: ${EVENTHUB_CONSUMER_GROUP:}
+      connection-string: ${EVENTHUB_CONNECTION_STRING:}
+      checkpoint-batch-size: ${EVENTHUB_CHECKPOINT_BATCH_SIZE:0}
+      processor-host: ${EVENTHUB_PROCESSOR_HOST:}
+      storage:
+          blob-prefix: ${EVENTHUB_BLOB_PREFIX:}
+          container: ${EVENTHUB_STORAGE_CONTAINER:}
+          connection-string: ${EVENTHUB_STORAGE_CONNECTION_STRING:}
