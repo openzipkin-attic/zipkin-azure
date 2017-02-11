@@ -28,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.isA;
 import static org.hamcrest.core.Is.is;
 
-public class LazyRegisterEventProcessorTest {
+public class LazyRegisterEventProcessorFactoryWithHostTest {
   @Rule
   public ExpectedException thrown = ExpectedException.none();
 
@@ -37,7 +37,8 @@ public class LazyRegisterEventProcessorTest {
 
   @Test
   public void get_registersFactory() throws Exception {
-    LazyRegisterEventProcessor lazy = new TestLazyRegisterEventProcessor();
+    LazyRegisterEventProcessorFactoryWithHost
+        lazy = new TestLazyRegisterEventProcessorFactoryWithHost();
 
     lazy.get();
 
@@ -47,7 +48,8 @@ public class LazyRegisterEventProcessorTest {
   @Test
   public void get_doesntWrapRuntimeException() throws Exception {
     RuntimeException exception = new RuntimeException("Failure initializing Storage lease manager");
-    LazyRegisterEventProcessor lazy = new TestLazyRegisterEventProcessor() {
+    LazyRegisterEventProcessorFactoryWithHost
+        lazy = new TestLazyRegisterEventProcessorFactoryWithHost() {
       @Override Future<?> registerEventProcessorFactoryWithHost() throws Exception {
         throw exception;
       }
@@ -59,7 +61,8 @@ public class LazyRegisterEventProcessorTest {
 
   @Test
   public void get_wrapsCheckedException() throws Exception {
-    LazyRegisterEventProcessor lazy = new TestLazyRegisterEventProcessor() {
+    LazyRegisterEventProcessorFactoryWithHost
+        lazy = new TestLazyRegisterEventProcessorFactoryWithHost() {
       @Override Future<?> registerEventProcessorFactoryWithHost() throws InvalidKeyException {
         throw new InvalidKeyException();
       }
@@ -72,7 +75,8 @@ public class LazyRegisterEventProcessorTest {
 
   @Test
   public void close_unregistersFactoryWhenOpen() throws Exception {
-    LazyRegisterEventProcessor lazy = new TestLazyRegisterEventProcessor();
+    LazyRegisterEventProcessorFactoryWithHost
+        lazy = new TestLazyRegisterEventProcessorFactoryWithHost();
 
     lazy.get();
     lazy.close();
@@ -82,7 +86,8 @@ public class LazyRegisterEventProcessorTest {
 
   @Test
   public void close_doesntUnregisterFactoryWhenNotYetOpen() throws Exception {
-    LazyRegisterEventProcessor lazy = new TestLazyRegisterEventProcessor();
+    LazyRegisterEventProcessorFactoryWithHost
+        lazy = new TestLazyRegisterEventProcessorFactoryWithHost();
 
     lazy.close();
 
@@ -91,7 +96,8 @@ public class LazyRegisterEventProcessorTest {
 
   @Test
   public void close_cancelsPendingRegistration() throws Exception {
-    LazyRegisterEventProcessor lazy = new TestLazyRegisterEventProcessor() {
+    LazyRegisterEventProcessorFactoryWithHost
+        lazy = new TestLazyRegisterEventProcessorFactoryWithHost() {
       @Override Future<?> registerEventProcessorFactoryWithHost() throws InvalidKeyException {
         return registration; // note: we aren't setting this done!
       }
@@ -107,8 +113,9 @@ public class LazyRegisterEventProcessorTest {
   @Test
   public void close_doesntWrapRuntimeException() throws Exception {
     RuntimeException exception = new RuntimeException("Failure initializing Storage lease manager");
-    LazyRegisterEventProcessor lazy = new TestLazyRegisterEventProcessor() {
-      @Override void unregisterEventProcessorFromHost() {
+    LazyRegisterEventProcessorFactoryWithHost
+        lazy = new TestLazyRegisterEventProcessorFactoryWithHost() {
+      @Override void unregisterEventProcessorFactoryFromHost() {
         throw exception;
       }
     };
@@ -120,8 +127,9 @@ public class LazyRegisterEventProcessorTest {
 
   @Test
   public void close_UnwrapsExecutionException() throws Exception {
-    LazyRegisterEventProcessor lazy = new TestLazyRegisterEventProcessor() {
-      @Override void unregisterEventProcessorFromHost() throws ExecutionException {
+    LazyRegisterEventProcessorFactoryWithHost
+        lazy = new TestLazyRegisterEventProcessorFactoryWithHost() {
+      @Override void unregisterEventProcessorFactoryFromHost() throws ExecutionException {
         throw new ExecutionException(new RuntimeException());
       }
     };
@@ -133,8 +141,9 @@ public class LazyRegisterEventProcessorTest {
 
   @Test
   public void close_wrapsInterruptedAndSetsFlag() throws Exception {
-    LazyRegisterEventProcessor lazy = new TestLazyRegisterEventProcessor() {
-      @Override void unregisterEventProcessorFromHost() throws InterruptedException {
+    LazyRegisterEventProcessorFactoryWithHost
+        lazy = new TestLazyRegisterEventProcessorFactoryWithHost() {
+      @Override void unregisterEventProcessorFactoryFromHost() throws InterruptedException {
         throw new InterruptedException();
       }
     };
@@ -148,8 +157,9 @@ public class LazyRegisterEventProcessorTest {
     }
   }
 
-  class TestLazyRegisterEventProcessor extends LazyRegisterEventProcessor {
-    TestLazyRegisterEventProcessor() {
+  class TestLazyRegisterEventProcessorFactoryWithHost
+      extends LazyRegisterEventProcessorFactoryWithHost {
+    TestLazyRegisterEventProcessorFactoryWithHost() {
       super(EventHubCollector.newBuilder()
           .connectionString(
               "endpoint=sb://someurl.net;SharedAccessKeyName=dumbo;SharedAccessKey=uius7y8ewychsih")
@@ -162,7 +172,7 @@ public class LazyRegisterEventProcessorTest {
       return registration;
     }
 
-    @Override void unregisterEventProcessorFromHost()
+    @Override void unregisterEventProcessorFactoryFromHost()
         throws InterruptedException, ExecutionException {
       unregistered.set(true);
     }

@@ -106,25 +106,25 @@ public final class EventHubCollector implements CollectorComponent {
   }
 
   final AtomicBoolean closed = new AtomicBoolean(false);
-  final LazyCloseable<Future<?>> lazyRegisterEventProcessor;
+  final LazyCloseable<Future<?>> lazyRegisterEventProcessorFactoryWithHost;
 
   EventHubCollector(Builder builder) {
-    this(new LazyRegisterEventProcessor(builder));
+    this(new LazyRegisterEventProcessorFactoryWithHost(builder));
   }
 
-  EventHubCollector(LazyCloseable<Future<?>> lazyRegisterEventProcessor) {
-    this.lazyRegisterEventProcessor = lazyRegisterEventProcessor;
+  EventHubCollector(LazyCloseable<Future<?>> lazyRegisterEventProcessorFactoryWithHost) {
+    this.lazyRegisterEventProcessorFactoryWithHost = lazyRegisterEventProcessorFactoryWithHost;
   }
 
   @Override public EventHubCollector start() {
-    if (!closed.get()) lazyRegisterEventProcessor.get();
+    if (!closed.get()) lazyRegisterEventProcessorFactoryWithHost.get();
     return this;
   }
 
   @Override public CheckResult check() {
     try {
       // make sure compute doesn't throw an exception
-      Future<?> registrationFuture = lazyRegisterEventProcessor.get();
+      Future<?> registrationFuture = lazyRegisterEventProcessorFactoryWithHost.get();
       registrationFuture.get(); // make sure registration succeeded
       return CheckResult.OK;
     } catch (RuntimeException e) {
@@ -141,6 +141,6 @@ public final class EventHubCollector implements CollectorComponent {
 
   @Override public void close() throws IOException {
     if (!closed.compareAndSet(false, true)) return;
-    lazyRegisterEventProcessor.close();
+    lazyRegisterEventProcessorFactoryWithHost.close();
   }
 }
