@@ -22,15 +22,15 @@ import java.util.concurrent.Future;
 import zipkin.internal.LazyCloseable;
 
 /**
- * This registers an event processor on the first call to get {@link #get()}. If an event processor
- * was registered, it is deregistered on {@link #close()}.
+ * This registers an event processor factory on the first call to get {@link #get()}. If an event
+ * processor factory was registered, it is deregistered on {@link #close()}.
  */
 // not final for testing
-class LazyRegisterEventProcessor extends LazyCloseable<Future<?>> {
+class LazyRegisterEventProcessorFactoryWithHost extends LazyCloseable<Future<?>> {
   final EventProcessorHost host;
   final IEventProcessorFactory<?> factory;
 
-  LazyRegisterEventProcessor(EventHubCollector.Builder builder) {
+  LazyRegisterEventProcessorFactoryWithHost(EventHubCollector.Builder builder) {
     host = new EventProcessorHost(
         builder.processorHost,
         builder.name,
@@ -60,7 +60,7 @@ class LazyRegisterEventProcessor extends LazyCloseable<Future<?>> {
     if (maybeNull == null) return;
     try {
       maybeNull.cancel(true);
-      unregisterEventProcessorFromHost();
+      unregisterEventProcessorFactoryFromHost();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       InterruptedIOException toThrow =
@@ -77,7 +77,7 @@ class LazyRegisterEventProcessor extends LazyCloseable<Future<?>> {
     return host.registerEventProcessorFactory(factory);
   }
 
-  void unregisterEventProcessorFromHost() throws InterruptedException, ExecutionException {
+  void unregisterEventProcessorFactoryFromHost() throws InterruptedException, ExecutionException {
     host.unregisterEventProcessor();
   }
 }
