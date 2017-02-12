@@ -76,10 +76,10 @@ mkdir eventhub
 When you enable the "eventhub" profile, you can configure eventhub with
 short environment variables similar to other [Zipkin integrations](https://github.com/openzipkin/zipkin/blob/master/zipkin-server/README.md#elasticsearch-storage).
 
-TODO: realistic values
+
 ``` bash
 cd /tmp
-EVENTHUB_CONNECTION_STRING=foo
-EVENTHUB_STORAGE_CONNECTION_STRING=bar
+EVENTHUB_CONNECTION_STRING=Endpoint=sb://< EventHub Address>;SharedAccessKeyName=<name>;SharedAccessKey=<key>
+EVENTHUB_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=https;AccountName=<yourAccountName>;AccountKey=<yourAccountKey>
 java -Dloader.path=eventhub -Dspring.profiles.active=eventhub -cp zipkin.jar org.springframework.boot.loader.PropertiesLauncher
 ```
