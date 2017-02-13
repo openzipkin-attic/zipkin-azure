@@ -16,17 +16,18 @@ package zipkin.collector.eventhub;
 import com.microsoft.azure.eventhubs.EventData;
 import com.microsoft.azure.eventprocessorhost.PartitionContext;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.junit.Rule;
+import org.junit.After;
 import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
 import zipkin.Codec;
 import zipkin.TestObjects;
 import zipkin.collector.Collector;
@@ -34,21 +35,37 @@ import zipkin.storage.InMemoryStorage;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 public class ZipkinEventProcessorTest {
 
-  @Rule
-  public MockitoRule mocks = MockitoJUnit.rule();
-
   InMemoryStorage storage = new InMemoryStorage();
   Collector collector = Collector.builder(EventHubCollector.class).storage(storage).build();
-
+  ConcurrentLinkedQueue<EventData> checkpointEvents = new ConcurrentLinkedQueue<>();
   TestLogger logger = new TestLogger();
-  ZipkinEventProcessor processor = new ZipkinEventProcessor(logger, collector, 10);
 
-  @Mock PartitionContext context;
+  // we are using mock only to create an instance. we can't mock methods as some of our tests
+  // are multithreaded.
+  PartitionContext context = mock(PartitionContext.class);
+
+  ZipkinEventProcessor processor = new ZipkinEventProcessor(logger, collector, 10) {
+    String partitionId(PartitionContext context) {
+      assertThat(context).isSameAs(ZipkinEventProcessorTest.this.context);
+      return "1";
+    }
+
+    @Override void checkpoint(PartitionContext context, EventData data)
+        throws ExecutionException, InterruptedException {
+      assertThat(context).isSameAs(ZipkinEventProcessorTest.this.context);
+      checkpointEvents.add(data);
+    }
+  };
+
+  // mocked invocations aren't thread-safe. let's test we aren't using them
+  @After public void verifyNoCallsToContext() {
+    verifyZeroInteractions(context);
+  }
 
   @Test
   public void onEvents_singleJsonEvent() throws Exception {
@@ -70,24 +87,87 @@ public class ZipkinEventProcessorTest {
 
   @Test
   public void checkpointsOnBatchSize() throws Exception {
-    processor = new ZipkinEventProcessor(logger, collector, TestObjects.TRACE.size() - 1);
+    EventData event1 = messageWithThreeSpans("a", 1);
+    EventData event2 = messageWithThreeSpans("b", 2);
+    EventData event3 = messageWithThreeSpans("c", 3);
+    EventData event4 = messageWithThreeSpans("d", 4);
 
+    // We don't expect a checkpoint, yet
+    processor.onEvents(context, asList(event1, event2, event3));
+    assertThat(checkpointEvents)
+        .isEmpty();
+    assertThat(logger.messages.poll())
+        .isNull();
+
+    // We expect a checkpoint as we completed a batch
+    processor.onEvents(context, asList(event4));
+    assertThat(checkpointEvents)
+        .containsExactly(event4);
+    assertThat(logger.messages.poll())
+        .isEqualTo("FINE: Partition 1 checkpointing at d,4");
+  }
+
+  /** This shows that checkpointing is consistent when callbacks are on different threads. */
+  @Test
+  public void parallelCheckpoint() throws Exception {
+    int spansPerEvent = 3;
+
+    // We checkpoint at or over the checkpoint batch size. By default, our batch size is
+    // 10, so if we have 3 spans per event, we checkpoint on the 3rd event (span count 12 not 10).
+    int eventsPerCheckpoint = processor.checkpointBatchSize / spansPerEvent;
+    if (processor.checkpointBatchSize % spansPerEvent > 0) eventsPerCheckpoint++;
+
+    // make a lot of events to ensure concurrency works.
+    int eventCount = 1000;
+    final ConcurrentLinkedQueue<EventData> events = new ConcurrentLinkedQueue<>();
+    for (int i = 0; i < eventCount; i++) {
+      events.add(messageWithThreeSpans(Integer.toHexString(i + 1), 1 + i));
+    }
+
+    // We currently don't know if onEvents is always called from the same thread or not.
+    //
+    // To test logic is consistent, we fire up 10 threads who will pull events of the queue and
+    // invoke onEvents with that event. This will happen concurrently and out-of-order.
+    // If we don't end up with an exact number of checkpoints, we might have a concurrency bug.
+    CountDownLatch latch = new CountDownLatch(events.size());
+    int threadCount = 10;
+    ExecutorService exec = Executors.newFixedThreadPool(threadCount);
+    for (int i = 0; i < threadCount; i++) {
+      exec.execute(() -> {
+        EventData event;
+        while ((event = events.poll()) != null) {
+          try {
+            processor.onEvents(context, asList(event));
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
+          latch.countDown();
+        }
+      });
+    }
+
+    //latch.await();
+
+    exec.shutdown();
+    exec.awaitTermination(1, TimeUnit.SECONDS);
+
+    assertThat(processor.countSinceCheckpoint)
+        .isZero();
+    assertThat(checkpointEvents)
+        .hasSize(eventCount / eventsPerCheckpoint);
+  }
+
+  static EventData messageWithThreeSpans(String offset, long sequenceNumber) throws Exception {
     EventData data = new EventData(Codec.JSON.writeSpans(TestObjects.TRACE));
     LinkedHashMap<String, Object> sysProps = new LinkedHashMap<>();
-    sysProps.put("x-opt-offset", "abcde");
-    sysProps.put("x-opt-sequence-number", 1L);
+    sysProps.put("x-opt-offset", offset);
+    sysProps.put("x-opt-sequence-number", sequenceNumber);
     addSystemProperties(data, sysProps);
-    when(context.getPartitionId()).thenReturn("0");
-
-    processor.onEvents(context, asList(data));
-
-    verify(context).checkpoint(data);
-    assertThat(logger.messages)
-        .containsExactly("FINE: Partition 0 checkpointing at abcde,1");
+    return data;
   }
 
   static class TestLogger extends Logger {
-    List<String> messages = new ArrayList<>();
+    ConcurrentLinkedQueue<String> messages = new ConcurrentLinkedQueue<>();
 
     TestLogger() {
       super("", null);

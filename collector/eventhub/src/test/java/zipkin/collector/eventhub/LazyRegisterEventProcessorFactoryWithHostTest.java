@@ -19,6 +19,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -27,6 +28,7 @@ import zipkin.storage.InMemoryStorage;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.isA;
 import static org.hamcrest.core.Is.is;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 public class LazyRegisterEventProcessorFactoryWithHostTest {
   @Rule
@@ -34,6 +36,11 @@ public class LazyRegisterEventProcessorFactoryWithHostTest {
 
   CompletableFuture<Object> registration = new CompletableFuture<>();
   AtomicBoolean unregistered = new AtomicBoolean();
+
+  /** Calling this ensures the main thread's interrupt status isn't tainted */
+  @After public void uninterrupt(){
+    Thread.currentThread().interrupted();
+  }
 
   @Test
   public void get_registersFactory() throws Exception {
