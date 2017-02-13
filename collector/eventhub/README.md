@@ -30,7 +30,7 @@ TODO: each description should note impact, like why you'd set this
 The following variables configure the server:
 
 Variable | Default | Description
---- | ---
+--- | --- | ---
 `EVENTHUB_CONNECTION_STRING` | None | TODO: description and link to azure docs
 `EVENTHUB_STORAGE_CONNECTION_STRING` | None | TODO: description and link to azure docs
 `EVENTHUB_NAME` | zipkin | TODO: link to azure docs
