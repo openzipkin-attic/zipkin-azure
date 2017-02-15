@@ -31,14 +31,14 @@ The following variables configure the server:
 
 Variable | Default | Description
 --- | ---
-`EVENTHUB_CONNECTION_STRING` | None | TODO: description and link to azure docs
-`EVENTHUB_STORAGE_CONNECTION_STRING` | None | TODO: description and link to azure docs
+`EVENTHUB_CONNECTION_STRING` | None | Azure EventHub ConnectionString
+`EVENTHUB_STORAGE_CONNECTION_STRING` | None | Azure Storage ConnectionString
 `EVENTHUB_NAME` | zipkin | TODO: link to azure docs
-`EVENTHUB_CHECKPOINT_BATCH_SIZE` | 10 | TODO: explain when you'd set this
-`EVENTHUB_CONSUMER_GROUP` | $Default | TODO: explain when you'd set this
-`EVENTHUB_PROCESSOR_HOST` | random GUID | TODO: explain when you'd set this
-`EVENTHUB_STORAGE_CONTAINER` | zipkin | Indicates where blobs are created for the partition lease.
-`EVENTHUB_STORAGE_BLOB_PREFIX` | same as processor host | The path within the storage container.
+`EVENTHUB_CHECKPOINT_BATCH_SIZE` | 10 | The number of messages consumed from a partition after which checkpointing occurs.
+`EVENTHUB_CONSUMER_GROUP` | "$Default" | Consumer Group for your EventHub
+`EVENTHUB_PROCESSOR_HOST` | random GUID | Name of the processor host - for information purposes only.
+`EVENTHUB_STORAGE_CONTAINER` | "zipkin" | Indicates the container in which partition offsets are stored and used for the partition lease.
+`EVENTHUB_STORAGE_BLOB_PREFIX` | "zipkin_checkpoint_store" | The path within the storage container where the offsets get stored.
 
 ## Alternate Configuration
 `EventHubCollector` can also be used as a library, where attributes are
