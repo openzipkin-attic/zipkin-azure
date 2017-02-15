@@ -101,6 +101,16 @@ public class EventHubCollectorTest {
     assertThat(closes.get()).isEqualTo(1);
   }
 
+  @Test
+  public void blobpathprefix_set_toaconstant_atstartup(){
+    EventHubCollector.Builder builder1 = EventHubCollector.newBuilder();
+    EventHubCollector.Builder builder2 = EventHubCollector.newBuilder();
+
+    // make sure it is not changing every time like before
+    assertThat(builder2.storageBlobPrefix).isEqualTo(builder1.storageBlobPrefix);
+
+  }
+
   class LazyFuture extends LazyCloseable<Future<?>> {
     @Override protected Future<?> compute() {
       registration.complete("foo");

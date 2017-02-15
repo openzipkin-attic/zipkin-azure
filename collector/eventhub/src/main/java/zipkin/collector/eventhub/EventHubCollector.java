@@ -40,7 +40,7 @@ public final class EventHubCollector implements CollectorComponent {
     int checkpointBatchSize = 10;
     String storageConnectionString;
     String storageContainer = "zipkin";
-    String storageBlobPrefix = processorHost;
+    String storageBlobPrefix = "zipkin_checkpoint_store"; // TODO: integration testing
 
     Builder() {
     }

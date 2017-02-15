@@ -29,8 +29,10 @@ import zipkin.internal.LazyCloseable;
 class LazyRegisterEventProcessorFactoryWithHost extends LazyCloseable<Future<?>> {
   final EventProcessorHost host;
   final IEventProcessorFactory<?> factory;
+  final EventHubCollector.Builder builder;
 
   LazyRegisterEventProcessorFactoryWithHost(EventHubCollector.Builder builder) {
+    this.builder = builder;
     host = new EventProcessorHost(
         builder.processorHost,
         builder.name,
