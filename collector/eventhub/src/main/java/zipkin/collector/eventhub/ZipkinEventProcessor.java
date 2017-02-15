@@ -28,13 +28,15 @@ import zipkin.collector.Collector;
 
 import static zipkin.storage.Callback.NOOP;
 
-// TODO: we assume this is a single-threaded processor. If not, batching logic must be changed
-final class ZipkinEventProcessor implements IEventProcessor {
+class ZipkinEventProcessor implements IEventProcessor {
   final Logger logger;
   final Collector collector;
   final int checkpointBatchSize;
 
-  int countSinceCheckpoint = 0;
+  // We assume callbacks can come from different threads, so access to this variable are guarded.
+  // Undo concurrency and related code if https://github.com/Azure/azure-event-hubs-java/issues/52
+  // deems it unnecessary
+  int countSinceCheckpoint = 0; // guarded by this
 
   ZipkinEventProcessor(Collector collector, int checkpointBatchSize) {
     this(Logger.getLogger(ZipkinEventProcessor.class.getName()), collector, checkpointBatchSize);
@@ -59,30 +61,66 @@ final class ZipkinEventProcessor implements IEventProcessor {
   @Override
   public void onEvents(PartitionContext context, Iterable<EventData> messages)
       throws ExecutionException, InterruptedException {
-
     // don't issue a write until we checkpoint or exit this callback
     List<Span> buffer = new ArrayList<>();
 
     for (EventData data : messages) {
       byte[] bytes = data.getBody();
-      buffer.addAll(bytes[0] == '[' ? Codec.JSON.readSpans(bytes) : Codec.THRIFT.readSpans(bytes));
+      List<Span> nextSpans = bytes[0] == '['
+          ? Codec.JSON.readSpans(bytes)
+          : Codec.THRIFT.readSpans(bytes);
+      buffer.addAll(nextSpans);
 
-      countSinceCheckpoint += buffer.size();
-      if (countSinceCheckpoint >= checkpointBatchSize) {
+      if (maybeCheckpoint(context, data, nextSpans.size())) {
         collector.accept(buffer, NOOP);
-        buffer.clear(); // clear so we don't write the spans again
-        countSinceCheckpoint = 0;
-        if (logger.isLoggable(Level.FINE)) {
-          logger.log(Level.FINE, "Partition " + context.getPartitionId() + " checkpointing at " +
-              data.getSystemProperties().getOffset() + "," + data.getSystemProperties()
-              .getSequenceNumber());
-        }
-        context.checkpoint(data);
+        buffer.clear();
       }
     }
+
     if (!buffer.isEmpty()) {
       collector.accept(buffer, NOOP);
     }
+  }
+
+  /**
+   * If what we've read puts us at or over our count since last checkpoint, checkpoint and return
+   * true.
+   */
+  boolean maybeCheckpoint(PartitionContext context, EventData data, int spansRead)
+      throws InterruptedException, ExecutionException {
+    if (!shouldCheckPoint(spansRead)) return false;
+
+    if (logger.isLoggable(Level.FINE)) {
+      logger.log(Level.FINE, "Partition " + partitionId(context) + " checkpointing at " +
+          data.getSystemProperties().getOffset() + "," + data.getSystemProperties()
+          .getSequenceNumber());
+    }
+    checkpoint(context, data);
+    return true;
+  }
+
+  boolean shouldCheckPoint(int spansRead) {
+    synchronized (this) {
+      countSinceCheckpoint += spansRead;
+      if (countSinceCheckpoint >= checkpointBatchSize) {
+        countSinceCheckpoint = 0;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Azure classes are in a signed jar, so we can't easily override them for testing, especially
+  // for concurrent tests. Override below for tests.
+  //
+  // See http://stackoverflow.com/questions/42184038/strategy-for-intercepting-signed-classes
+  String partitionId(PartitionContext context) {
+    return context.getPartitionId();
+  }
+
+  void checkpoint(PartitionContext context, EventData data)
+      throws ExecutionException, InterruptedException {
+    context.checkpoint(data);
   }
 
   @Override
