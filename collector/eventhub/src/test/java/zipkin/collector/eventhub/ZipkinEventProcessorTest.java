@@ -35,36 +35,20 @@ import zipkin.storage.InMemoryStorage;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyZeroInteractions;
 
 public class ZipkinEventProcessorTest {
 
   InMemoryStorage storage = new InMemoryStorage();
   Collector collector = Collector.builder(EventHubCollector.class).storage(storage).build();
-  ConcurrentLinkedQueue<EventData> checkpointEvents = new ConcurrentLinkedQueue<>();
   TestLogger logger = new TestLogger();
 
-  // we are using mock only to create an instance. we can't mock methods as some of our tests
-  // are multithreaded.
-  PartitionContext context = mock(PartitionContext.class);
+  PartitionContext context = FakePartitionContext.INSTANCE.get();
+  ConcurrentLinkedQueue<EventData> checkpointEvents = FakePartitionContext.INSTANCE.checkpointEvents;
 
-  ZipkinEventProcessor processor = new ZipkinEventProcessor(logger, collector, 10) {
-    String partitionId(PartitionContext context) {
-      assertThat(context).isSameAs(ZipkinEventProcessorTest.this.context);
-      return "1";
-    }
+  ZipkinEventProcessor processor = new ZipkinEventProcessor(logger, collector, 10);
 
-    @Override void checkpoint(PartitionContext context, EventData data)
-        throws ExecutionException, InterruptedException {
-      assertThat(context).isSameAs(ZipkinEventProcessorTest.this.context);
-      checkpointEvents.add(data);
-    }
-  };
-
-  // mocked invocations aren't thread-safe. let's test we aren't using them
-  @After public void verifyNoCallsToContext() {
-    verifyZeroInteractions(context);
+  @After public void drainEvents(){
+    checkpointEvents.clear();
   }
 
   @Test
