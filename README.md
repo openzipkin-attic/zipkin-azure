@@ -84,7 +84,7 @@ EVENTHUB_STORAGE_CONNECTION_STRING=<connection string>;DefaultEndpointsProtocol=
 java -Dloader.path=eventhub -Dspring.profiles.active=eventhub -cp zipkin.jar org.springframework.boot.loader.PropertiesLauncher
 ```
 
-Above command for powershell users:
+Below command for powershell users:
 
 ``` bash
 cd /tmp
