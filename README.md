@@ -7,7 +7,7 @@ Shared libraries that provide Zipkin integration with Azure services. Requires J
 
 # Usage
 These components provide Zipkin Senders and Collectors which build off interfaces provided by
-the [zipkin-reporters-java](https://github.com/openzipkin/zipkin-reporter-java) and
+the [zipkin-reporter-java](https://github.com/openzipkin/zipkin-reporter-java) and
 [zipkin](https://github.com/openzipkin/zipkin) projects.
 
 ## Senders
@@ -26,7 +26,7 @@ launcher to load your collector (or sender) alongside the zipkin-server
 process.
 
 To integrate a module with a Zipkin server, you need to:
-* add an extracted module directory to the `loader.path`
+* add a module jar to the `loader.path`
 * enable the profile associated with that module
 * launch Zipkin with `PropertiesLauncher`
 
@@ -34,15 +34,15 @@ Each module will also have different minimum variables that need to be set.
 
 Ex.
 ```
-$ java -Dloader.path=eventhub -Dspring.profiles.active=eventhub -cp zipkin.jar org.springframework.boot.loader.PropertiesLauncher
+$ java -Dloader.path=eventhub.jar -Dspring.profiles.active=eventhub -cp zipkin.jar org.springframework.boot.loader.PropertiesLauncher
 ```
 
-TODO: Until distributions are published, we can't write instructions to
-simply download modules. Until then, users will have to build locally.
+## Example integrating the Azure Event Hub Collector
 
-## Building locally
+If you cannot use our [Docker image](https://github.com/openzipkin/docker-zipkin-azure), you can still integrate
+yourself by downloading a couple jars. Here's an example of integrating the Azure Event Hub Collector.
 
-Here's an example of building and integrating the Azure Event Hub Collector. For Windows users Powershell is recommended.
+For Windows users Powershell is recommended.
 
 ### Step 1: Download zipkin-server jar
 Download the [latest released server](https://search.maven.org/remote_content?g=io.zipkin.java&a=zipkin-server&v=LATEST&c=exec) as zipkin.jar:
@@ -52,27 +52,15 @@ cd /tmp
 wget -O zipkin.jar 'https://search.maven.org/remote_content?g=io.zipkin.java&a=zipkin-server&v=LATEST&c=exec'
 ```
 
-### Step 2: Build the Event Hub module
-Until the first version is published, you need to build the collector locally.
-``` bash
-git clone https://github.com/openzipkin/zipkin-azure.git
-(cd zipkin-azure && ./mvnw package)
+### Step 2: Download the latest eventhub-module jar
+Download the [latest released Event Hub module](https://search.maven.org/remote_content?g=io.zipkin.azure&a=zipkin-autoconfigure-collector-eventhub&v=LATEST&c=module) as zipkin.jar:
+
 ```
-
-This should result in a file like:
-`zipkin-azure/autoconfigure/collector-eventhub/target/zipkin-collector-eventhub-autoconfig-x.x.x-SNAPSHOT-module.jar`
-
-### Step 3: Extract the Event Hub module into a subdirectory
-The Event Hub module should be in a different directory than where you put zipkin.jar.
-It is easiest to create a directory named "eventhub" relative to zipkin.jar
-
-``` bash
 cd /tmp
-mkdir eventhub
-(cd eventhub && jar -xf zipkin-collector-eventhub-autoconfig-x.x.x-SNAPSHOT-module.jar)
+wget -O eventhub.jar 'https://search.maven.org/remote_content?g=io.zipkin.azure&a=zipkin-autoconfigure-collector-eventhub&v=LATEST&c=module'
 ```
 
-### Step 4: Run the server with the "eventhub" profile active
+### Step 3: Run the server with the "eventhub" profile active
 When you enable the "eventhub" profile, you can configure eventhub with
 short environment variables similar to other [Zipkin integrations](https://github.com/openzipkin/zipkin/blob/master/zipkin-server/README.md#elasticsearch-storage).
 
@@ -81,7 +69,7 @@ short environment variables similar to other [Zipkin integrations](https://githu
 cd /tmp
 EVENTHUB_CONNECTION_STRING=Endpoint=sb://< EventHub Address>;SharedAccessKeyName=<name>;SharedAccessKey=<key>
 EVENTHUB_STORAGE_CONNECTION_STRING=<connection string>;DefaultEndpointsProtocol=https;AccountName=<yourAccountName>;AccountKey=<yourAccountKey>
-java -Dloader.path=eventhub -Dspring.profiles.active=eventhub -cp zipkin.jar org.springframework.boot.loader.PropertiesLauncher
+java -Dloader.path=eventhub.jar -Dspring.profiles.active=eventhub -cp zipkin.jar org.springframework.boot.loader.PropertiesLauncher
 ```
 
 Below command for powershell users:
@@ -90,5 +78,5 @@ Below command for powershell users:
 cd /tmp
 EVENTHUB_CONNECTION_STRING=Endpoint=sb://< EventHub Address>;SharedAccessKeyName=<name>;SharedAccessKey=<key>
 EVENTHUB_STORAGE_CONNECTION_STRING=<connection string>;DefaultEndpointsProtocol=https;AccountName=<yourAccountName>;AccountKey=<yourAccountKey>
-java '-Dloader.path=eventhub' '-Dspring.profiles.active=eventhub' -cp zipkin.jar org.springframework.boot.loader.PropertiesLauncher
+java '-Dloader.path=eventhub.jar' '-Dspring.profiles.active=eventhub' -cp zipkin.jar org.springframework.boot.loader.PropertiesLauncher
 ```
