@@ -1,0 +1,7 @@
+# When enabled, this allows shorter env properties (ex -Dspring.profiles.active=applicationinsights)
+zipkin:
+  storage:
+    applicationinsights:
+      instrumentationKey: ${AI_INSTRUMENTATION_KEY:}
+      applicationId: ${AI_APPLICATION_ID:}
+      apiKey: ${AI_API_KEY:}
