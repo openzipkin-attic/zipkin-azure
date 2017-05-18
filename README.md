@@ -17,7 +17,7 @@ Zipkin collectors receives and decodes span messages from a source. These
 spans are later stored.
 
 Collector | Description
---- | --- | ---
+--- | --- 
 [Event Hub](./collector/eventhub) | An alternative to Kafka.
 
 ## Server integration
