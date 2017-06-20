@@ -28,7 +28,7 @@ import zipkin.collector.Collector;
 
 import static zipkin.storage.Callback.NOOP;
 
-class ZipkinEventProcessor implements IEventProcessor {
+final class ZipkinEventProcessor implements IEventProcessor {
   final Logger logger;
   final Collector collector;
   final int checkpointBatchSize;
@@ -91,11 +91,11 @@ class ZipkinEventProcessor implements IEventProcessor {
     if (!shouldCheckPoint(spansRead)) return false;
 
     if (logger.isLoggable(Level.FINE)) {
-      logger.log(Level.FINE, "Partition " + partitionId(context) + " checkpointing at " +
+      logger.log(Level.FINE, "Partition " + context.getPartitionId() + " checkpointing at " +
           data.getSystemProperties().getOffset() + "," + data.getSystemProperties()
           .getSequenceNumber());
     }
-    checkpoint(context, data);
+    context.checkpoint(data);
     return true;
   }
 
@@ -108,19 +108,6 @@ class ZipkinEventProcessor implements IEventProcessor {
       }
     }
     return false;
-  }
-
-  // Azure classes are in a signed jar, so we can't easily override them for testing, especially
-  // for concurrent tests. Override below for tests.
-  //
-  // See http://stackoverflow.com/questions/42184038/strategy-for-intercepting-signed-classes
-  String partitionId(PartitionContext context) {
-    return context.getPartitionId();
-  }
-
-  void checkpoint(PartitionContext context, EventData data)
-      throws ExecutionException, InterruptedException {
-    context.checkpoint(data);
   }
 
   @Override
