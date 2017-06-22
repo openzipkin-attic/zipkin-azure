@@ -15,12 +15,14 @@ Event Hub Collector is enabled when..
 * EVENTHUB_CONNECTION_STRING is set
 
 Ex. Assuming the eventhub module artifact is extracted into a directory called eventhub..
-TODO: realistic connection strings!
+
 ```bash
-EVENTHUB_CONNECTION_STRING=foo
-EVENTHUB_STORAGE_CONNECTION_STRING=bar
+EVENTHUB_CONNECTION_STRING=sb://< EventHub Address>;SharedAccessKeyName=<name>;SharedAccessKey=<key> \
+EVENTHUB_STORAGE_CONNECTION_STRING=<connection string>;DefaultEndpointsProtocol=https;AccountName=<yourAccountName>;AccountKey=<yourAccountKey> \
 java -Dloader.path=eventhub -Dspring.profiles.active=eventhub -cp zipkin.jar org.springframework.boot.loader.PropertiesLauncher
 ```
+
+** NOTE: Make sure the parameters are defined in the same line or use environment variables **
 
 TODO: put a maven central download link once published
 TODO: put a link to a docker image that has the module installed and activated.
