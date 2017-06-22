@@ -37,9 +37,9 @@
 
     <main.basedir>${project.basedir}</main.basedir>
 
-    <zipkin.version>1.26.0</zipkin.version>
+    <zipkin.version>1.26.1</zipkin.version>
     <zipkin-reporter.version>0.10.0</zipkin-reporter.version>
-    <spring-boot.version>1.5.3.RELEASE</spring-boot.version>
+    <spring-boot.version>1.5.4.RELEASE</spring-boot.version>
   </properties>
 
   <name>Zipkin Azure (Parent)</name>

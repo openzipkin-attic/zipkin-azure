@@ -60,7 +60,7 @@ git clone https://github.com/openzipkin/zipkin-azure.git
 ```
 
 This should result in a file like:
-`zipkin-azure/autoconfigure/collector-eventhub/target/zipkin-collector-eventhub-autoconfig-x.x.x-SNAPSHOT-module.jar`
+`zipkin-azure/autoconfigure/collector-eventhub/target/zipkin-autoconfigure-collector-eventhub-x.x.x-SNAPSHOT-module.jar`
 
 ### Step 3: Extract the Event Hub module into a subdirectory
 The Event Hub module should be in a different directory than where you put zipkin.jar.
