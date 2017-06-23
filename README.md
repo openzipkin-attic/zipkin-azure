@@ -17,7 +17,7 @@ Zipkin collectors receives and decodes span messages from a source. These
 spans are later stored.
 
 Collector | Description
---- | --- | ---
+--- | --- 
 [Event Hub](./collector/eventhub) | An alternative to Kafka.
 
 ## Server integration
@@ -60,7 +60,7 @@ git clone https://github.com/openzipkin/zipkin-azure.git
 ```
 
 This should result in a file like:
-`zipkin-azure/autoconfigure/collector-eventhub/target/zipkin-collector-eventhub-autoconfig-x.x.x-SNAPSHOT-module.jar`
+`zipkin-azure/autoconfigure/collector-eventhub/target/zipkin-autoconfigure-collector-eventhub-x.x.x-SNAPSHOT-module.jar`
 
 ### Step 3: Extract the Event Hub module into a subdirectory
 The Event Hub module should be in a different directory than where you put zipkin.jar.
@@ -79,10 +79,12 @@ short environment variables similar to other [Zipkin integrations](https://githu
 
 ``` bash
 cd /tmp
-EVENTHUB_CONNECTION_STRING=Endpoint=sb://< EventHub Address>;SharedAccessKeyName=<name>;SharedAccessKey=<key>
-EVENTHUB_STORAGE_CONNECTION_STRING=<connection string>;DefaultEndpointsProtocol=https;AccountName=<yourAccountName>;AccountKey=<yourAccountKey>
+EVENTHUB_CONNECTION_STRING=Endpoint=sb://< EventHub Address>;SharedAccessKeyName=<name>;SharedAccessKey=<key> \
+EVENTHUB_STORAGE_CONNECTION_STRING=<connection string>;DefaultEndpointsProtocol=https;AccountName=<yourAccountName>;AccountKey=<yourAccountKey> \
 java -Dloader.path=eventhub -Dspring.profiles.active=eventhub -cp zipkin.jar org.springframework.boot.loader.PropertiesLauncher
 ```
+** NOTE: Make sure the parameters are defined in the same line or use environment variables **
+
 
 Below command for powershell users:
 
