@@ -79,10 +79,12 @@ short environment variables similar to other [Zipkin integrations](https://githu
 
 ``` bash
 cd /tmp
-EVENTHUB_CONNECTION_STRING=Endpoint=sb://< EventHub Address>;SharedAccessKeyName=<name>;SharedAccessKey=<key>
-EVENTHUB_STORAGE_CONNECTION_STRING=<connection string>;DefaultEndpointsProtocol=https;AccountName=<yourAccountName>;AccountKey=<yourAccountKey>
+EVENTHUB_CONNECTION_STRING=Endpoint=sb://< EventHub Address>;SharedAccessKeyName=<name>;SharedAccessKey=<key> \
+EVENTHUB_STORAGE_CONNECTION_STRING=<connection string>;DefaultEndpointsProtocol=https;AccountName=<yourAccountName>;AccountKey=<yourAccountKey> \
 java -Dloader.path=eventhub -Dspring.profiles.active=eventhub -cp zipkin.jar org.springframework.boot.loader.PropertiesLauncher
 ```
+** NOTE: Make sure the parameters are defined in the same line or use environment variables **
+
 
 Below command for powershell users:
 
