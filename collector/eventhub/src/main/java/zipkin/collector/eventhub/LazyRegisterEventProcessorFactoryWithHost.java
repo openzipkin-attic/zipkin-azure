@@ -14,11 +14,16 @@
 package zipkin.collector.eventhub;
 
 import com.microsoft.azure.eventprocessorhost.EventProcessorHost;
+import com.microsoft.azure.eventprocessorhost.IEventProcessor;
 import com.microsoft.azure.eventprocessorhost.IEventProcessorFactory;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+
+import com.microsoft.azure.eventprocessorhost.PartitionContext;
 import zipkin.internal.LazyCloseable;
 
 /**
@@ -30,6 +35,7 @@ class LazyRegisterEventProcessorFactoryWithHost extends LazyCloseable<Future<?>>
   final EventProcessorHost host;
   final IEventProcessorFactory<?> factory;
   final EventHubCollector.Builder builder;
+  final ConcurrentMap<String, IEventProcessor> hosts = new ConcurrentHashMap<>();
 
   LazyRegisterEventProcessorFactoryWithHost(EventHubCollector.Builder builder) {
     this.builder = builder;
@@ -42,9 +48,16 @@ class LazyRegisterEventProcessorFactoryWithHost extends LazyCloseable<Future<?>>
         builder.storageContainer,
         builder.storageBlobPrefix
     );
-    ZipkinEventProcessor processor =
-        new ZipkinEventProcessor(builder.delegate.build(), builder.checkpointBatchSize);
-    factory = context -> processor;
+
+    // NOTE: for some reason using lambdas occasionally giving java.lang.NoSuchMethodError exceptions
+    factory = new IEventProcessorFactory<IEventProcessor>() {
+      @Override
+      public IEventProcessor createEventProcessor(PartitionContext context) throws Exception {
+        hosts.putIfAbsent(context.getPartitionId(),
+            new ZipkinEventProcessor(builder.delegate.build(), builder.checkpointBatchSize));
+        return hosts.get(context.getPartitionId());
+      }
+    };
   }
 
   @Override protected final Future<?> compute() {
