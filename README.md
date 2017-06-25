@@ -17,7 +17,7 @@ Zipkin collectors receives and decodes span messages from a source. These
 spans are later stored.
 
 Collector | Description
---- | --- | ---
+--- | --- 
 [Event Hub](./collector/eventhub) | An alternative to Kafka.
 
 ## Server integration
@@ -53,7 +53,7 @@ wget -O zipkin.jar 'https://search.maven.org/remote_content?g=io.zipkin.java&a=z
 ```
 
 ### Step 2: Download the latest eventhub-module jar
-Download the [latest released Event Hub module](https://search.maven.org/remote_content?g=io.zipkin.azure&a=zipkin-autoconfigure-collector-eventhub&v=LATEST&c=module) as zipkin.jar:
+Download the [latest released Event Hub module](https://search.maven.org/remote_content?g=io.zipkin.azure&a=zipkin-autoconfigure-collector-eventhub&v=LATEST&c=module) as eventhub.jar:
 
 ```
 cd /tmp
@@ -64,13 +64,14 @@ wget -O eventhub.jar 'https://search.maven.org/remote_content?g=io.zipkin.azure&
 When you enable the "eventhub" profile, you can configure eventhub with
 short environment variables similar to other [Zipkin integrations](https://github.com/openzipkin/zipkin/blob/master/zipkin-server/README.md#elasticsearch-storage).
 
-
 ``` bash
 cd /tmp
-EVENTHUB_CONNECTION_STRING=Endpoint=sb://< EventHub Address>;SharedAccessKeyName=<name>;SharedAccessKey=<key>
-EVENTHUB_STORAGE_CONNECTION_STRING=<connection string>;DefaultEndpointsProtocol=https;AccountName=<yourAccountName>;AccountKey=<yourAccountKey>
+EVENTHUB_CONNECTION_STRING=Endpoint=sb://< EventHub Address>;SharedAccessKeyName=<name>;SharedAccessKey=<key> \
+EVENTHUB_STORAGE_CONNECTION_STRING=<connection string>;DefaultEndpointsProtocol=https;AccountName=<yourAccountName>;AccountKey=<yourAccountKey> \
 java -Dloader.path=eventhub.jar -Dspring.profiles.active=eventhub -cp zipkin.jar org.springframework.boot.loader.PropertiesLauncher
 ```
+** NOTE: Make sure the parameters are defined in the same line or use environment variables **
+
 
 Below command for powershell users:
 
