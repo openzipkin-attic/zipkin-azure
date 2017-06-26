@@ -27,8 +27,11 @@ java -Dloader.path=applicationinsights.jar -Dspring.profiles.active=applicationi
 ** NOTE: Make sure the parameters are defined in the same line or use environment variables **
 
 TODO: put a maven central download link once published
+
 TODO: put a link to a docker image that has the module installed and activated.
+
 TODO: add descriptions to Event.Builder setters!
+
 TODO: each description should note impact, like why you'd set this
 
 ## Alternate Configuration
