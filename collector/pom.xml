@@ -20,7 +20,7 @@
   <parent>
     <groupId>io.zipkin.azure</groupId>
     <artifactId>zipkin-azure-parent</artifactId>
-    <version>0.1.7</version>
+    <version>0.1.8-SNAPSHOT</version>
   </parent>
 
   <artifactId>zipkin-collector-parent</artifactId>
