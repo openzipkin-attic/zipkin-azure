@@ -18,20 +18,12 @@ import com.microsoft.applicationinsights.telemetry.RequestTelemetry;
 import com.microsoft.applicationinsights.telemetry.SeverityLevel;
 import com.microsoft.applicationinsights.TelemetryConfiguration;
 import com.microsoft.applicationinsights.telemetry.Duration;
-<<<<<<< HEAD
-import com.microsoft.applicationinsights.telemetry.RequestTelemetry;
-=======
->>>>>>> 78a8ebd7abe80096951bdf798ed9965d52b42afa
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
-<<<<<<< HEAD
-import org.apache.http.HttpStatus;
-=======
->>>>>>> 78a8ebd7abe80096951bdf798ed9965d52b42afa
 import zipkin.Annotation;
 import zipkin.Span;
 import zipkin.storage.StorageAdapters;
