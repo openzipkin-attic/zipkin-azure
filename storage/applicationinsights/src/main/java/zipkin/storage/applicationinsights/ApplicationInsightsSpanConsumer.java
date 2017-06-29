@@ -14,15 +14,21 @@
 package zipkin.storage.applicationinsights;
 
 import com.microsoft.applicationinsights.TelemetryClient;
+import com.microsoft.applicationinsights.telemetry.RequestTelemetry;
 import com.microsoft.applicationinsights.telemetry.SeverityLevel;
 import com.microsoft.applicationinsights.TelemetryConfiguration;
+import com.microsoft.applicationinsights.telemetry.Duration;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import zipkin.Annotation;
 import zipkin.Span;
+import zipkin.internal.Util;
 import zipkin.storage.StorageAdapters;
+import zipkin.Constants;
 
 import static zipkin.internal.ApplyTimestampAndDuration.guessTimestamp;
 
@@ -47,12 +53,22 @@ final class ApplicationInsightsSpanConsumer implements StorageAdapters.SpanConsu
       for (int i = 0; i < spans.size(); i++) {
         Span span = spans.get(i);
         Map<String, String> spanProps = new HashMap<String, String>();
+
+        String spanId = Long.toString(span.id);
+        String parentSpanId = span.parentId != null? Long.toString(span.parentId): null;
+
+        String traceId = Long.toString(span.traceId);
+        String traceIdHigh = Long.toString(span.traceIdHigh);
+        String namespace = (this.namespace == null) ? "" : this.namespace;
+
         //set indexing properties, avoid null values for props
-        spanProps.put("spanid", Long.toString(span.id));
-        spanProps.put("traceId", Long.toString(span.traceId));
-        spanProps.put("traceIdHigh", Long.toString(span.traceIdHigh));
+        spanProps.put("spanid", spanId);
+        spanProps.put("traceId", traceId);
+        spanProps.put("traceIdHigh", traceIdHigh);
+        if(parentSpanId!= null)
+          spanProps.put("OperationParentId", parentSpanId);
         //namespace to support duplicate data
-        spanProps.put("namespace", (this.namespace == null)?"":this.namespace);
+        spanProps.put("namespace", namespace);
         if (span.annotations != null
             && span.annotations.size() > 0
             && span.annotations.get(0).endpoint != null
@@ -69,6 +85,24 @@ final class ApplicationInsightsSpanConsumer implements StorageAdapters.SpanConsu
         String res = gson.toJson(jsonElement);
         String msg = "{ \"Span\":" + res + "}";
         telemetry.trackTrace(msg, SeverityLevel.Critical, spanProps);
+
+        //data model changes
+        telemetry.getContext().getOperation().setId(Util.toLowerHex(span.traceIdHigh, span.traceId));
+        telemetry.getContext().getOperation().setName(span.name);
+
+        for (Annotation annotation : span.annotations) {
+
+          if (annotation.value.equalsIgnoreCase(Constants.CLIENT_SEND)) {
+            String spanName = span.name !=null && !span.name.isEmpty()?span.name:Constants.CLIENT_SEND;
+            telemetry.trackDependency(spanName, "request", new Duration(span.duration==null?0L:span.duration/1000),
+                true);
+          }
+          else if(annotation.value.equalsIgnoreCase(Constants.SERVER_SEND)){
+            String spanName = span.name !=null && !span.name.isEmpty()?span.name:Constants.SERVER_RECV;
+            telemetry.trackRequest(new RequestTelemetry(spanName, new Date(timestamp), span.duration/1000,
+                "Ok",true));
+          }
+        }
       }
 
       telemetry.flush();
