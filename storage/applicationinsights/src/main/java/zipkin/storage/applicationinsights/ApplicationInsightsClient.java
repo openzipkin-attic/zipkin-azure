@@ -36,8 +36,8 @@ public class ApplicationInsightsClient {
 
   private final String AI_RESTAPI_QUERYURLSTUB =
       "https://api.applicationinsights.io/beta/apps/%s/query?query=%s";
-  private final String AI_APPLICATIONID;
-  private final String AI_APIKEY;
+  private final String AI_APPLICATION_ID;
+  private final String AI_API_KEY;
   private boolean strictTraceId = true;
   private int waitTimeInSeconds;
   private String namespace;
@@ -143,8 +143,8 @@ public class ApplicationInsightsClient {
       + "| project span = parsejson(message).Span;";
 
   public ApplicationInsightsClient(String appId, String apiKey) {
-    this.AI_APPLICATIONID = appId;
-    this.AI_APIKEY = apiKey;
+    this.AI_APPLICATION_ID = appId;
+    this.AI_API_KEY = apiKey;
   }
 
   public static void setNamespaceWaitStatus(String namespace, Boolean value) {
@@ -173,7 +173,7 @@ public class ApplicationInsightsClient {
         String.format(AI_QUERYTOGETTRACE, addSingleQuote(currentNamespace), addSingleQuote(traceId),
             addSingleQuote(traceIdHigh), this.strictTraceId);
     String getTraceQueryUrl =
-        String.format(AI_RESTAPI_QUERYURLSTUB, AI_APPLICATIONID, getTraceQuery);
+        String.format(AI_RESTAPI_QUERYURLSTUB, AI_APPLICATION_ID, getTraceQuery);
 
     waitForRecentWrites();
     try {
@@ -227,7 +227,7 @@ public class ApplicationInsightsClient {
         addSingleQuote(minDuration), addSingleQuote(maxDuration), request.limit, annotations,
         binaryAnnotations, this.strictTraceId);
     String getTracesQueryUrl =
-        String.format(AI_RESTAPI_QUERYURLSTUB, AI_APPLICATIONID, getTracesQuery);
+        String.format(AI_RESTAPI_QUERYURLSTUB, AI_APPLICATION_ID, getTracesQuery);
     String response = "";
 
     try {
@@ -289,7 +289,7 @@ public class ApplicationInsightsClient {
     final String getServicesNamesQuery =
         String.format(AI_QUERYTOGETUNIQUESERVICENAMES, addSingleQuote(currentNamespace));
 
-    String getServiceNamesQueryUrl = String.format(AI_RESTAPI_QUERYURLSTUB, AI_APPLICATIONID,
+    String getServiceNamesQueryUrl = String.format(AI_RESTAPI_QUERYURLSTUB, AI_APPLICATION_ID,
         getServicesNamesQuery);
     String response = "";
     try {
@@ -321,7 +321,7 @@ public class ApplicationInsightsClient {
     final String getUniqueSpanNamesQuery =
         String.format(AI_QUERYTOGETUNIQUESPANNAMES, addSingleQuote(currentNamespace),
             addSingleQuote(serviceName));
-    String getSpanNamesQueryUrl = String.format(AI_RESTAPI_QUERYURLSTUB, AI_APPLICATIONID,
+    String getSpanNamesQueryUrl = String.format(AI_RESTAPI_QUERYURLSTUB, AI_APPLICATION_ID,
         getUniqueSpanNamesQuery);
     String response = "";
 
@@ -413,7 +413,7 @@ public class ApplicationInsightsClient {
   private String runAIQuery(String url) throws IOException {
     OkHttpClient client = new OkHttpClient();
     Request request = new Request.Builder().url(url)
-        .addHeader("x-api-key", AI_APIKEY).build();
+        .addHeader("x-api-key", AI_API_KEY).build();
     try (Response response = client.newCall(request).execute()) {
       return response.body().string();
     }

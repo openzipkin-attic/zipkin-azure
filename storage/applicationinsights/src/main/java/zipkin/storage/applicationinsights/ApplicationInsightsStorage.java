@@ -15,6 +15,8 @@ package zipkin.storage.applicationinsights;
 
 import java.util.concurrent.Executor;
 import zipkin.internal.Nullable;
+
+import java.util.logging.Logger;
 import zipkin.storage.AsyncSpanConsumer;
 import zipkin.storage.AsyncSpanStore;
 import zipkin.storage.SpanStore;
@@ -25,6 +27,8 @@ import static zipkin.storage.StorageAdapters.blockingToAsync;
 
 public final class ApplicationInsightsStorage implements StorageComponent {
 
+  static final Logger LOG = Logger.getLogger(ApplicationInsightsStorage.class.getName());
+
   public static Builder builder() {
     return new Builder();
   }
@@ -33,7 +37,7 @@ public final class ApplicationInsightsStorage implements StorageComponent {
     boolean strictTraceId = true;
     private String instrumentationKey;
     private String applicationId;
-    private String apikey;
+    private String apiKey;
     private String namespace;
     private Executor executor;
     private int readWaitTimeInSeconds;
@@ -49,17 +53,17 @@ public final class ApplicationInsightsStorage implements StorageComponent {
     }
 
     public Builder instrumentationKey(@Nullable String instrumentationKey) {
-      this.instrumentationKey = instrumentationKey;
+      this.instrumentationKey = checkNotNull(instrumentationKey, "instrumentationKey");
       return this;
     }
 
     public Builder applicationId(@Nullable String applicationId) {
-      this.applicationId = applicationId;
+      this.applicationId = checkNotNull(applicationId, "applicationId");
       return this;
     }
 
-    public Builder apikey(@Nullable String apikey) {
-      this.apikey = apikey;
+    public Builder apikey(@Nullable String apiKey) {
+      this.apiKey = checkNotNull(apiKey, "apiKey");
       return this;
     }
 
@@ -85,7 +89,7 @@ public final class ApplicationInsightsStorage implements StorageComponent {
   private final String namespace;
   private final String instrumentationKey;
   private final String applicationId;
-  private final String apikey;
+  private final String apiKey;
   private final Executor executor;
   private int readWaitTimeInSeconds;
 
@@ -93,16 +97,17 @@ public final class ApplicationInsightsStorage implements StorageComponent {
     this.strictTraceId = builder.strictTraceId;
     this.instrumentationKey = builder.instrumentationKey;
     this.applicationId = builder.applicationId;
-    this.apikey = builder.apikey;
+    this.apiKey = builder.apiKey;
     this.namespace = builder.namespace;
     this.readWaitTimeInSeconds = builder.readWaitTimeInSeconds;
     this.executor = checkNotNull(builder.executor, "executor");
+    LOG.info("ApplicationInsightsStorage initialized: " + instrumentationKey + " " + applicationId + " " + apiKey);
   }
 
   @Override
   public SpanStore spanStore() {
     ApplicationInsightsSpanStore aiSpanStore =
-        new ApplicationInsightsSpanStore(this.applicationId, this.apikey);
+        new ApplicationInsightsSpanStore(this.applicationId, this.apiKey);
     aiSpanStore.setStrictTraceId(this.strictTraceId);
     aiSpanStore.setNamespace(this.namespace);
     aiSpanStore.setWaitTimeInSeconds(this.readWaitTimeInSeconds);

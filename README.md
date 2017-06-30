@@ -16,9 +16,10 @@ the [zipkin-reporters-java](https://github.com/openzipkin/zipkin-reporter-java) 
 Zipkin collectors receives and decodes span messages from a source. These
 spans are later stored.
 
-Collector | Description
---- | --- 
-[Event Hub](./collector/eventhub) | An alternative to Kafka.
+Collector | Description | Readme
+--- | --- | ---
+[Event Hub](./collector/eventhub) | An alternative to Kafka. | [eventhub-collector](/collector/eventhub/README.md)
+[Application Insights](./collector/applicationinsights) | Integrates Application Insights data model with Zipkin concepts. | [applicationinsights-storage](/storage/applicationinsights/README.md)
 
 ## Server integration
 In order to integrate with zipkin-server, you need to use properties
@@ -42,7 +43,7 @@ simply download modules. Until then, users will have to build locally.
 
 ## Building locally
 
-Here's an example of building and integrating the Azure Event Hub Collector. For Windows users Powershell is recommended.
+Here's an example of building and integrating the Azure Event Hub Collector. For Windows users PowerShell is recommended.
 
 ### Step 1: Download zipkin-server jar
 Download the [latest released server](https://search.maven.org/remote_content?g=io.zipkin.java&a=zipkin-server&v=LATEST&c=exec) as zipkin.jar:
@@ -56,7 +57,7 @@ wget -O zipkin.jar 'https://search.maven.org/remote_content?g=io.zipkin.java&a=z
 Until the first version is published, you need to build the collector locally.
 ``` bash
 git clone https://github.com/openzipkin/zipkin-azure.git
-(cd zipkin-azure && ./mvnw package)
+(cd zipkin-azure && ./mvnw -DskipTests package)
 ```
 
 This should result in a file like:
@@ -86,11 +87,11 @@ java -Dloader.path=eventhub -Dspring.profiles.active=eventhub -cp zipkin.jar org
 ** NOTE: Make sure the parameters are defined in the same line or use environment variables **
 
 
-Below command for powershell users:
+Below command for PowerShell users:
 
-``` bash
+``` PowerShell
 cd /tmp
-EVENTHUB_CONNECTION_STRING=Endpoint=sb://< EventHub Address>;SharedAccessKeyName=<name>;SharedAccessKey=<key>
-EVENTHUB_STORAGE_CONNECTION_STRING=<connection string>;DefaultEndpointsProtocol=https;AccountName=<yourAccountName>;AccountKey=<yourAccountKey>
+$env:EVENTHUB_CONNECTION_STRING='Endpoint=sb://< EventHub Address>;SharedAccessKeyName=<name>;SharedAccessKey=<key>'
+$env:EVENTHUB_STORAGE_CONNECTION_STRING='<connection string>;DefaultEndpointsProtocol=https;AccountName=<yourAccountName>;AccountKey=<yourAccountKey>'
 java '-Dloader.path=eventhub' '-Dspring.profiles.active=eventhub' -cp zipkin.jar org.springframework.boot.loader.PropertiesLauncher
 ```
