@@ -18,10 +18,11 @@ parameters. One to collect the data and two to query the data. Event Hub Collect
 Ex. Assuming the applicationinsights module artifact is extracted into a directory called applicationinsights..
 
 ```bash
+STORAGE_TYPE=applicationinsights
 AI_INSTRUMENTATION_KEY=c953a825-e184-4f31-b275-4f0199c36586\
 AI_APPLICATION_ID=037f09c1-a96b-475f-b35e-eec772214619 \
 AI_API_KEY=tp63dp4le4dgrmcb0cc2ecuqj5he1mvrgahfyeyn\
-java -Dloader.path=applicationinsights.jar -Dspring.profiles.active=applicationinsights -cp zipkin.jar org.springframework.boot.loader.PropertiesLauncher
+java -Dloader.path=applicationinsights -Dspring.profiles.active=applicationinsights -cp zipkin.jar org.springframework.boot.loader.PropertiesLauncher
 ```
 
 ** NOTE: Make sure the parameters are defined in the same line or use environment variables **
