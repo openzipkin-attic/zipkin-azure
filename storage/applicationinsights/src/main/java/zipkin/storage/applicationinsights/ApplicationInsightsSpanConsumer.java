@@ -89,6 +89,8 @@ final class ApplicationInsightsSpanConsumer implements StorageAdapters.SpanConsu
         //data model changes
         telemetry.getContext().getOperation().setId(Util.toLowerHex(span.traceIdHigh, span.traceId));
         telemetry.getContext().getOperation().setName(span.name);
+        telemetry.getContext().getProperties().put("zipkin-span", res.replace("\"", "\\\""));
+        telemetry.getContext().getProperties().put("namespace", namespace);
 
         for (Annotation annotation : span.annotations) {
 
@@ -99,7 +101,7 @@ final class ApplicationInsightsSpanConsumer implements StorageAdapters.SpanConsu
           }
           else if(annotation.value.equalsIgnoreCase(Constants.SERVER_SEND)){
             String spanName = span.name !=null && !span.name.isEmpty()?span.name:Constants.SERVER_RECV;
-            telemetry.trackRequest(new RequestTelemetry(spanName, new Date(timestamp), span.duration/1000,
+            telemetry.trackRequest(new RequestTelemetry(spanName, new Date(timestamp), span.duration==null?0L:span.duration/1000,
                 "Ok",true));
           }
         }
