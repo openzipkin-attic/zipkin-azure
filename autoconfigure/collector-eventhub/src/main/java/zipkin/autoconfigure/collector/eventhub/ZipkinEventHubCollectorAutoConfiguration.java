@@ -48,6 +48,7 @@ public class ZipkinEventHubCollectorAutoConfiguration {
   static final class EventHubSetCondition extends SpringBootCondition {
     static final String PROPERTY_NAME = "zipkin.collector.eventhub.connection-string";
 
+    @Override
     public ConditionOutcome getMatchOutcome(ConditionContext context, AnnotatedTypeMetadata a) {
 
       String eventHubProperty = context.getEnvironment().getProperty(PROPERTY_NAME);

@@ -50,7 +50,7 @@ public class ZipkinEventProcessorTest {
   PartitionContext context = mock(PartitionContext.class);
 
   ZipkinEventProcessor processor = new ZipkinEventProcessor(logger, collector, 10) {
-    String partitionId(PartitionContext context) {
+    @Override String partitionId(PartitionContext context) {
       assertThat(context).isSameAs(ZipkinEventProcessorTest.this.context);
       return "1";
     }
