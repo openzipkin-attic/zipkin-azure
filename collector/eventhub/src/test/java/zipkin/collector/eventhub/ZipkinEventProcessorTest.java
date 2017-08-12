@@ -31,6 +31,8 @@ import org.junit.Test;
 import zipkin.Codec;
 import zipkin.TestObjects;
 import zipkin.collector.Collector;
+import zipkin.internal.Span2Converter;
+import zipkin.internal.Span2JsonCodec;
 import zipkin.storage.InMemoryStorage;
 
 import static java.util.Arrays.asList;
@@ -87,10 +89,10 @@ public class ZipkinEventProcessorTest {
 
   @Test
   public void checkpointsOnBatchSize() throws Exception {
-    EventData event1 = messageWithThreeSpans("a", 1);
-    EventData event2 = messageWithThreeSpans("b", 2);
-    EventData event3 = messageWithThreeSpans("c", 3);
-    EventData event4 = messageWithThreeSpans("d", 4);
+    EventData event1 = jsonMessageWithThreeSpans("a", 1);
+    EventData event2 = json2MessageWithThreeSpans("b", 2);
+    EventData event3 = thriftMessageWithThreeSpans("c", 3);
+    EventData event4 = json2MessageWithThreeSpans("d", 4);
 
     // We don't expect a checkpoint, yet
     processor.onEvents(context, asList(event1, event2, event3));
@@ -121,7 +123,7 @@ public class ZipkinEventProcessorTest {
     int eventCount = 1000;
     final ConcurrentLinkedQueue<EventData> events = new ConcurrentLinkedQueue<>();
     for (int i = 0; i < eventCount; i++) {
-      events.add(messageWithThreeSpans(Integer.toHexString(i + 1), 1 + i));
+      events.add(jsonMessageWithThreeSpans(Integer.toHexString(i + 1), 1 + i));
     }
 
     // We currently don't know if onEvents is always called from the same thread or not.
@@ -157,8 +159,26 @@ public class ZipkinEventProcessorTest {
         .hasSize(eventCount / eventsPerCheckpoint);
   }
 
-  static EventData messageWithThreeSpans(String offset, long sequenceNumber) throws Exception {
-    EventData data = new EventData(Codec.JSON.writeSpans(TestObjects.TRACE));
+  static EventData thriftMessageWithThreeSpans(String offset, long sequenceNumber) throws Exception {
+    return message(offset, sequenceNumber, Codec.THRIFT.writeSpans(TestObjects.TRACE));
+  }
+
+  static EventData jsonMessageWithThreeSpans(String offset, long sequenceNumber) throws Exception {
+    return message(offset, sequenceNumber, Codec.JSON.writeSpans(TestObjects.TRACE));
+  }
+
+  static EventData json2MessageWithThreeSpans(String offset, long sequenceNumber) throws Exception {
+    byte[] message = Span2JsonCodec.JSON.writeSpans(asList(
+        Span2Converter.fromSpan(TestObjects.LOTS_OF_SPANS[0]).get(0),
+        Span2Converter.fromSpan(TestObjects.LOTS_OF_SPANS[1]).get(0),
+        Span2Converter.fromSpan(TestObjects.LOTS_OF_SPANS[2]).get(0)
+    ));
+    return message(offset, sequenceNumber, message);
+  }
+
+  static EventData message(String offset, long sequenceNumber, byte[] message)
+      throws IllegalAccessException, NoSuchFieldException {
+    EventData data = new EventData(message);
     LinkedHashMap<String, Object> sysProps = new LinkedHashMap<>();
     sysProps.put("x-opt-offset", offset);
     sysProps.put("x-opt-sequence-number", sequenceNumber);
