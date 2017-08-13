@@ -7,6 +7,10 @@ service is similar to Apache Kafka where data is be pushed to a sink. On
 the other hand, single consumer reads from a partition have ordering guarantees.
 These partitions are check pointed on regular intervals.
 
+## Message encoding
+The message body is a list of spans. Supported encodings are the same as
+the [POST /spans](http://zipkin.io/zipkin-api/#/paths/%252Fspans) body: thrift or json.
+
 ## Server Configuration
 The most common configuration is integrating with the Zipkin server.
 Event Hub Collector is enabled when..
