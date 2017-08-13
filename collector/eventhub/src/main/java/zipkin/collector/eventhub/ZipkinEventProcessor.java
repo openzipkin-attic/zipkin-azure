@@ -22,8 +22,8 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import zipkin.Codec;
 import zipkin.Span;
+import zipkin.SpanDecoder;
 import zipkin.collector.Collector;
 
 import static zipkin.storage.Callback.NOOP;
@@ -65,10 +65,8 @@ class ZipkinEventProcessor implements IEventProcessor {
     List<Span> buffer = new ArrayList<>();
 
     for (EventData data : messages) {
-      byte[] bytes = data.getBody();
-      List<Span> nextSpans = bytes[0] == '['
-          ? Codec.JSON.readSpans(bytes)
-          : Codec.THRIFT.readSpans(bytes);
+      byte[] bytes = data.getBytes();
+      List<Span> nextSpans = SpanDecoder.DETECTING_DECODER.readSpans(bytes);
       buffer.addAll(nextSpans);
 
       if (maybeCheckpoint(context, data, nextSpans.size())) {
