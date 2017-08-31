@@ -26,13 +26,16 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.junit.After;
 import org.junit.Test;
 import zipkin.Codec;
 import zipkin.TestObjects;
 import zipkin.collector.Collector;
-import zipkin.internal.Span2Converter;
-import zipkin.internal.Span2JsonCodec;
+import zipkin.internal.V2SpanConverter;
+import zipkin.internal.v2.codec.Encoder;
+import zipkin.internal.v2.codec.MessageEncoder;
 import zipkin.storage.InMemoryStorage;
 
 import static java.util.Arrays.asList;
@@ -168,12 +171,11 @@ public class ZipkinEventProcessorTest {
   }
 
   static EventData json2MessageWithThreeSpans(String offset, long sequenceNumber) throws Exception {
-    byte[] message = Span2JsonCodec.JSON.writeSpans(asList(
-        Span2Converter.fromSpan(TestObjects.LOTS_OF_SPANS[0]).get(0),
-        Span2Converter.fromSpan(TestObjects.LOTS_OF_SPANS[1]).get(0),
-        Span2Converter.fromSpan(TestObjects.LOTS_OF_SPANS[2]).get(0)
-    ));
-    return message(offset, sequenceNumber, message);
+    List<byte[]> encodedSpans = IntStream.range(0, 3).mapToObj(i -> TestObjects.LOTS_OF_SPANS[i])
+        .flatMap(s -> V2SpanConverter.fromSpan(s).stream())
+        .map(Encoder.JSON::encode)
+        .collect(Collectors.toList());
+    return message(offset, sequenceNumber, MessageEncoder.JSON_BYTES.encode(encodedSpans));
   }
 
   static EventData message(String offset, long sequenceNumber, byte[] message)
