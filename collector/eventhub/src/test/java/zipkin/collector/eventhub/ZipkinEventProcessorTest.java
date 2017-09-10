@@ -34,8 +34,8 @@ import zipkin.Codec;
 import zipkin.TestObjects;
 import zipkin.collector.Collector;
 import zipkin.internal.V2SpanConverter;
-import zipkin.internal.v2.codec.Encoder;
-import zipkin.internal.v2.codec.MessageEncoder;
+import zipkin.internal.v2.Span;
+import zipkin.internal.v2.codec.SpanBytesEncoder;
 import zipkin.storage.InMemoryStorage;
 
 import static java.util.Arrays.asList;
@@ -171,11 +171,10 @@ public class ZipkinEventProcessorTest {
   }
 
   static EventData json2MessageWithThreeSpans(String offset, long sequenceNumber) throws Exception {
-    List<byte[]> encodedSpans = IntStream.range(0, 3).mapToObj(i -> TestObjects.LOTS_OF_SPANS[i])
+    List<Span> spans = IntStream.range(0, 3).mapToObj(i -> TestObjects.LOTS_OF_SPANS[i])
         .flatMap(s -> V2SpanConverter.fromSpan(s).stream())
-        .map(Encoder.JSON::encode)
         .collect(Collectors.toList());
-    return message(offset, sequenceNumber, MessageEncoder.JSON_BYTES.encode(encodedSpans));
+    return message(offset, sequenceNumber, SpanBytesEncoder.JSON_V2.encodeList(spans));
   }
 
   static EventData message(String offset, long sequenceNumber, byte[] message)
