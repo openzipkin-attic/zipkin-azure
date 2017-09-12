@@ -34,9 +34,9 @@ import zipkin.Codec;
 import zipkin.TestObjects;
 import zipkin.collector.Collector;
 import zipkin.internal.V2SpanConverter;
-import zipkin.internal.v2.Span;
-import zipkin.internal.v2.codec.SpanBytesEncoder;
 import zipkin.storage.InMemoryStorage;
+import zipkin2.Span;
+import zipkin2.codec.SpanBytesEncoder;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
