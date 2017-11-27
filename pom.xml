@@ -37,7 +37,7 @@
 
     <main.basedir>${project.basedir}</main.basedir>
 
-    <zipkin.version>2.3.0</zipkin.version>
+    <zipkin.version>2.4.0</zipkin.version>
     <spring-boot.version>1.5.8.RELEASE</spring-boot.version>
   </properties>
 
