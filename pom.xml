@@ -37,8 +37,8 @@
 
     <main.basedir>${project.basedir}</main.basedir>
 
-    <zipkin.version>2.7.0</zipkin.version>
-    <spring-boot.version>1.5.10.RELEASE</spring-boot.version>
+    <zipkin.version>2.7.2</zipkin.version>
+    <spring-boot.version>1.5.12.RELEASE</spring-boot.version>
   </properties>
 
   <name>Zipkin Azure (Parent)</name>
@@ -143,11 +143,11 @@
   <build>
     <pluginManagement>
       <plugins>
-        <!-- mvn -N io.takari:maven:wrapper -Dmaven=3.5.2 -->
+        <!-- mvn -N io.takari:maven:wrapper -Dmaven=3.5.3 -->
         <plugin>
           <groupId>io.takari</groupId>
           <artifactId>maven</artifactId>
-          <version>0.5.0</version>
+          <version>0.6.0</version>
         </plugin>
       </plugins>
     </pluginManagement>
