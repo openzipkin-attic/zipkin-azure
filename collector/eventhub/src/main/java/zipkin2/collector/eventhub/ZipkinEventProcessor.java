@@ -1,5 +1,5 @@
-/**
- * Copyright 2017 The OpenZipkin Authors
+/*
+ * Copyright 2017-2018 The OpenZipkin Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -11,7 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package zipkin.collector.eventhub;
+package zipkin2.collector.eventhub;
 
 import com.microsoft.azure.eventhubs.EventData;
 import com.microsoft.azure.eventprocessorhost.CloseReason;
@@ -22,13 +22,23 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import zipkin.Span;
-import zipkin.SpanDecoder;
-import zipkin.collector.Collector;
+import zipkin2.Callback;
+import zipkin2.Span;
+import zipkin2.codec.BytesDecoder;
+import zipkin2.collector.Collector;
 
-import static zipkin.storage.Callback.NOOP;
+import static zipkin2.SpanBytesDecoderDetector.decoderForListMessage;
 
 class ZipkinEventProcessor implements IEventProcessor {
+  static final Callback<Void> NOOP =
+      new Callback<Void>() {
+        @Override
+        public void onSuccess(Void value) {}
+
+        @Override
+        public void onError(Throwable t) {}
+      };
+
   final Logger logger;
   final Collector collector;
   final int checkpointBatchSize;
@@ -66,7 +76,8 @@ class ZipkinEventProcessor implements IEventProcessor {
 
     for (EventData data : messages) {
       byte[] bytes = data.getBytes();
-      List<Span> nextSpans = SpanDecoder.DETECTING_DECODER.readSpans(bytes);
+      BytesDecoder<Span> decoder = decoderForListMessage(bytes);
+      List<Span> nextSpans = decoder.decodeList(bytes);
       buffer.addAll(nextSpans);
 
       if (maybeCheckpoint(context, data, nextSpans.size())) {
@@ -89,9 +100,14 @@ class ZipkinEventProcessor implements IEventProcessor {
     if (!shouldCheckPoint(spansRead)) return false;
 
     if (logger.isLoggable(Level.FINE)) {
-      logger.log(Level.FINE, "Partition " + partitionId(context) + " checkpointing at " +
-          data.getSystemProperties().getOffset() + "," + data.getSystemProperties()
-          .getSequenceNumber());
+      logger.log(
+          Level.FINE,
+          "Partition "
+              + partitionId(context)
+              + " checkpointing at "
+              + data.getSystemProperties().getOffset()
+              + ","
+              + data.getSystemProperties().getSequenceNumber());
     }
     checkpoint(context, data);
     return true;

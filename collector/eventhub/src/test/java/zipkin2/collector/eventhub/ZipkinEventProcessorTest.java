@@ -1,5 +1,5 @@
-/**
- * Copyright 2017 The OpenZipkin Authors
+/*
+ * Copyright 2017-2018 The OpenZipkin Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -11,7 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package zipkin.collector.eventhub;
+package zipkin2.collector.eventhub;
 
 import com.microsoft.azure.eventhubs.EventData;
 import com.microsoft.azure.eventprocessorhost.PartitionContext;
@@ -30,23 +30,22 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.junit.After;
 import org.junit.Test;
-import zipkin.Codec;
-import zipkin.TestObjects;
-import zipkin.collector.Collector;
-import zipkin.internal.V2SpanConverter;
-import zipkin.storage.InMemoryStorage;
 import zipkin2.Span;
 import zipkin2.codec.SpanBytesEncoder;
+import zipkin2.collector.Collector;
+import zipkin2.storage.InMemoryStorage;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
+import static zipkin2.TestObjects.LOTS_OF_SPANS;
 
 public class ZipkinEventProcessorTest {
+  List<Span> spans = asList(LOTS_OF_SPANS[0], LOTS_OF_SPANS[1], LOTS_OF_SPANS[2]);
 
-  InMemoryStorage storage = new InMemoryStorage();
-  Collector collector = Collector.builder(EventHubCollector.class).storage(storage).build();
+  InMemoryStorage storage = InMemoryStorage.newBuilder().build();
+  Collector collector = Collector.newBuilder(EventHubCollector.class).storage(storage).build();
   ConcurrentLinkedQueue<EventData> checkpointEvents = new ConcurrentLinkedQueue<>();
   TestLogger logger = new TestLogger();
 
@@ -54,40 +53,43 @@ public class ZipkinEventProcessorTest {
   // are multithreaded.
   PartitionContext context = mock(PartitionContext.class);
 
-  ZipkinEventProcessor processor = new ZipkinEventProcessor(logger, collector, 10) {
-    @Override String partitionId(PartitionContext context) {
-      assertThat(context).isSameAs(ZipkinEventProcessorTest.this.context);
-      return "1";
-    }
+  ZipkinEventProcessor processor =
+      new ZipkinEventProcessor(logger, collector, 10) {
+        @Override
+        String partitionId(PartitionContext context) {
+          assertThat(context).isSameAs(ZipkinEventProcessorTest.this.context);
+          return "1";
+        }
 
-    @Override void checkpoint(PartitionContext context, EventData data)
-        throws ExecutionException, InterruptedException {
-      assertThat(context).isSameAs(ZipkinEventProcessorTest.this.context);
-      checkpointEvents.add(data);
-    }
-  };
+        @Override
+        void checkpoint(PartitionContext context, EventData data) {
+          assertThat(context).isSameAs(ZipkinEventProcessorTest.this.context);
+          checkpointEvents.add(data);
+        }
+      };
 
   // mocked invocations aren't thread-safe. let's test we aren't using them
-  @After public void verifyNoCallsToContext() {
+  @After
+  public void verifyNoCallsToContext() {
     verifyZeroInteractions(context);
   }
 
   @Test
   public void onEvents_singleJsonEvent() throws Exception {
-    onEvents_singleDatum(Codec.JSON);
+    onEvents_singleDatum(SpanBytesEncoder.JSON_V1);
   }
 
   @Test
   public void onEvents_singleThriftEvent() throws Exception {
-    onEvents_singleDatum(Codec.THRIFT);
+    onEvents_singleDatum(SpanBytesEncoder.THRIFT);
   }
 
-  void onEvents_singleDatum(Codec codec) throws ExecutionException, InterruptedException {
-    List<EventData> messages = asList(new EventData(codec.writeSpans(TestObjects.TRACE)));
+  void onEvents_singleDatum(SpanBytesEncoder codec)
+      throws ExecutionException, InterruptedException {
+    List<EventData> messages = asList(new EventData(codec.encodeList(spans)));
     processor.onEvents(context, messages);
 
-    assertThat(storage.spanStore().getRawTraces()).hasSize(1);
-    assertThat(storage.spanStore().getRawTraces().get(0)).isEqualTo(TestObjects.TRACE);
+    assertThat(storage.spanStore().getTraces()).hasSize(spans.size());
   }
 
   @Test
@@ -99,17 +101,13 @@ public class ZipkinEventProcessorTest {
 
     // We don't expect a checkpoint, yet
     processor.onEvents(context, asList(event1, event2, event3));
-    assertThat(checkpointEvents)
-        .isEmpty();
-    assertThat(logger.messages.poll())
-        .isNull();
+    assertThat(checkpointEvents).isEmpty();
+    assertThat(logger.messages.poll()).isNull();
 
     // We expect a checkpoint as we completed a batch
     processor.onEvents(context, asList(event4));
-    assertThat(checkpointEvents)
-        .containsExactly(event4);
-    assertThat(logger.messages.poll())
-        .isEqualTo("FINE: Partition 1 checkpointing at d,4");
+    assertThat(checkpointEvents).containsExactly(event4);
+    assertThat(logger.messages.poll()).isEqualTo("FINE: Partition 1 checkpointing at d,4");
   }
 
   /** This shows that checkpointing is consistent when callbacks are on different threads. */
@@ -138,42 +136,40 @@ public class ZipkinEventProcessorTest {
     int threadCount = 10;
     ExecutorService exec = Executors.newFixedThreadPool(threadCount);
     for (int i = 0; i < threadCount; i++) {
-      exec.execute(() -> {
-        EventData event;
-        while ((event = events.poll()) != null) {
-          try {
-            processor.onEvents(context, asList(event));
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-          latch.countDown();
-        }
-      });
+      exec.execute(
+          () -> {
+            EventData event;
+            while ((event = events.poll()) != null) {
+              try {
+                processor.onEvents(context, asList(event));
+              } catch (Exception e) {
+                e.printStackTrace();
+              }
+              latch.countDown();
+            }
+          });
     }
 
-    //latch.await();
+    // latch.await();
 
     exec.shutdown();
     exec.awaitTermination(1, TimeUnit.SECONDS);
 
-    assertThat(processor.countSinceCheckpoint)
-        .isZero();
-    assertThat(checkpointEvents)
-        .hasSize(eventCount / eventsPerCheckpoint);
+    assertThat(processor.countSinceCheckpoint).isZero();
+    assertThat(checkpointEvents).hasSize(eventCount / eventsPerCheckpoint);
   }
 
-  static EventData thriftMessageWithThreeSpans(String offset, long sequenceNumber) throws Exception {
-    return message(offset, sequenceNumber, Codec.THRIFT.writeSpans(TestObjects.TRACE));
+  EventData thriftMessageWithThreeSpans(String offset, long sequenceNumber) throws Exception {
+    return message(offset, sequenceNumber, SpanBytesEncoder.THRIFT.encodeList(spans));
   }
 
-  static EventData jsonMessageWithThreeSpans(String offset, long sequenceNumber) throws Exception {
-    return message(offset, sequenceNumber, Codec.JSON.writeSpans(TestObjects.TRACE));
+  EventData jsonMessageWithThreeSpans(String offset, long sequenceNumber) throws Exception {
+    return message(offset, sequenceNumber, SpanBytesEncoder.JSON_V1.encodeList(spans));
   }
 
   static EventData json2MessageWithThreeSpans(String offset, long sequenceNumber) throws Exception {
-    List<Span> spans = IntStream.range(0, 3).mapToObj(i -> TestObjects.LOTS_OF_SPANS[i])
-        .flatMap(s -> V2SpanConverter.fromSpan(s).stream())
-        .collect(Collectors.toList());
+    List<Span> spans =
+        IntStream.range(0, 3).mapToObj(i -> LOTS_OF_SPANS[i]).collect(Collectors.toList());
     return message(offset, sequenceNumber, SpanBytesEncoder.JSON_V2.encodeList(spans));
   }
 
@@ -195,7 +191,8 @@ public class ZipkinEventProcessorTest {
       setLevel(Level.FINE);
     }
 
-    @Override public void log(Level level, String msg) {
+    @Override
+    public void log(Level level, String msg) {
       messages.add(level + ": " + msg);
     }
   }

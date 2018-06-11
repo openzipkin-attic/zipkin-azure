@@ -1,5 +1,5 @@
-/**
- * Copyright 2017 The OpenZipkin Authors
+/*
+ * Copyright 2017-2018 The OpenZipkin Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -14,10 +14,10 @@
 package zipkin.autoconfigure.collector.eventhub;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import zipkin.collector.eventhub.EventHubCollector;
+import zipkin2.collector.eventhub.EventHubCollector;
 
 @ConfigurationProperties("zipkin.collector.eventhub")
-public class ZipkinEventHubCollectorProperties {
+class ZipkinEventHubCollectorProperties {
   private String name;
   private String consumerGroup;
   private String connectionString;

@@ -1,5 +1,5 @@
-/**
- * Copyright 2017 The OpenZipkin Authors
+/*
+ * Copyright 2017-2018 The OpenZipkin Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -11,7 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package zipkin.collector.eventhub;
+package zipkin2.collector.eventhub;
 
 import java.io.InterruptedIOException;
 import java.security.InvalidKeyException;
@@ -23,29 +23,28 @@ import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import zipkin.storage.InMemoryStorage;
+import zipkin2.storage.InMemoryStorage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.isA;
 import static org.hamcrest.core.Is.is;
-import static org.mockito.Mockito.verifyZeroInteractions;
 
 public class LazyRegisterEventProcessorFactoryWithHostTest {
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
+  @Rule public ExpectedException thrown = ExpectedException.none();
 
   CompletableFuture<Object> registration = new CompletableFuture<>();
   AtomicBoolean unregistered = new AtomicBoolean();
 
   /** Calling this ensures the main thread's interrupt status isn't tainted */
-  @After public void uninterrupt(){
+  @After
+  public void uninterrupt() {
     Thread.currentThread().interrupted();
   }
 
   @Test
   public void get_registersFactory() throws Exception {
-    LazyRegisterEventProcessorFactoryWithHost
-        lazy = new TestLazyRegisterEventProcessorFactoryWithHost();
+    LazyRegisterEventProcessorFactoryWithHost lazy =
+        new TestLazyRegisterEventProcessorFactoryWithHost();
 
     lazy.get();
 
@@ -55,12 +54,13 @@ public class LazyRegisterEventProcessorFactoryWithHostTest {
   @Test
   public void get_doesntWrapRuntimeException() throws Exception {
     RuntimeException exception = new RuntimeException("Failure initializing Storage lease manager");
-    LazyRegisterEventProcessorFactoryWithHost
-        lazy = new TestLazyRegisterEventProcessorFactoryWithHost() {
-      @Override Future<?> registerEventProcessorFactoryWithHost() throws Exception {
-        throw exception;
-      }
-    };
+    LazyRegisterEventProcessorFactoryWithHost lazy =
+        new TestLazyRegisterEventProcessorFactoryWithHost() {
+          @Override
+          Future<?> registerEventProcessorFactoryWithHost() throws Exception {
+            throw exception;
+          }
+        };
 
     thrown.expect(is(exception));
     lazy.get();
@@ -68,12 +68,13 @@ public class LazyRegisterEventProcessorFactoryWithHostTest {
 
   @Test
   public void get_wrapsCheckedException() throws Exception {
-    LazyRegisterEventProcessorFactoryWithHost
-        lazy = new TestLazyRegisterEventProcessorFactoryWithHost() {
-      @Override Future<?> registerEventProcessorFactoryWithHost() throws InvalidKeyException {
-        throw new InvalidKeyException();
-      }
-    };
+    LazyRegisterEventProcessorFactoryWithHost lazy =
+        new TestLazyRegisterEventProcessorFactoryWithHost() {
+          @Override
+          Future<?> registerEventProcessorFactoryWithHost() throws InvalidKeyException {
+            throw new InvalidKeyException();
+          }
+        };
 
     thrown.expect(RuntimeException.class);
     thrown.expectCause(isA(InvalidKeyException.class));
@@ -82,8 +83,8 @@ public class LazyRegisterEventProcessorFactoryWithHostTest {
 
   @Test
   public void close_unregistersFactoryWhenOpen() throws Exception {
-    LazyRegisterEventProcessorFactoryWithHost
-        lazy = new TestLazyRegisterEventProcessorFactoryWithHost();
+    LazyRegisterEventProcessorFactoryWithHost lazy =
+        new TestLazyRegisterEventProcessorFactoryWithHost();
 
     lazy.get();
     lazy.close();
@@ -93,8 +94,8 @@ public class LazyRegisterEventProcessorFactoryWithHostTest {
 
   @Test
   public void close_doesntUnregisterFactoryWhenNotYetOpen() throws Exception {
-    LazyRegisterEventProcessorFactoryWithHost
-        lazy = new TestLazyRegisterEventProcessorFactoryWithHost();
+    LazyRegisterEventProcessorFactoryWithHost lazy =
+        new TestLazyRegisterEventProcessorFactoryWithHost();
 
     lazy.close();
 
@@ -103,12 +104,13 @@ public class LazyRegisterEventProcessorFactoryWithHostTest {
 
   @Test
   public void close_cancelsPendingRegistration() throws Exception {
-    LazyRegisterEventProcessorFactoryWithHost
-        lazy = new TestLazyRegisterEventProcessorFactoryWithHost() {
-      @Override Future<?> registerEventProcessorFactoryWithHost() throws InvalidKeyException {
-        return registration; // note: we aren't setting this done!
-      }
-    };
+    LazyRegisterEventProcessorFactoryWithHost lazy =
+        new TestLazyRegisterEventProcessorFactoryWithHost() {
+          @Override
+          Future<?> registerEventProcessorFactoryWithHost() throws InvalidKeyException {
+            return registration; // note: we aren't setting this done!
+          }
+        };
 
     lazy.get();
     lazy.close();
@@ -120,12 +122,13 @@ public class LazyRegisterEventProcessorFactoryWithHostTest {
   @Test
   public void close_doesntWrapRuntimeException() throws Exception {
     RuntimeException exception = new RuntimeException("Failure initializing Storage lease manager");
-    LazyRegisterEventProcessorFactoryWithHost
-        lazy = new TestLazyRegisterEventProcessorFactoryWithHost() {
-      @Override void unregisterEventProcessorFactoryFromHost() {
-        throw exception;
-      }
-    };
+    LazyRegisterEventProcessorFactoryWithHost lazy =
+        new TestLazyRegisterEventProcessorFactoryWithHost() {
+          @Override
+          void unregisterEventProcessorFactoryFromHost() {
+            throw exception;
+          }
+        };
 
     lazy.get();
     thrown.expect(is(exception));
@@ -134,12 +137,13 @@ public class LazyRegisterEventProcessorFactoryWithHostTest {
 
   @Test
   public void close_UnwrapsExecutionException() throws Exception {
-    LazyRegisterEventProcessorFactoryWithHost
-        lazy = new TestLazyRegisterEventProcessorFactoryWithHost() {
-      @Override void unregisterEventProcessorFactoryFromHost() throws ExecutionException {
-        throw new ExecutionException(new RuntimeException());
-      }
-    };
+    LazyRegisterEventProcessorFactoryWithHost lazy =
+        new TestLazyRegisterEventProcessorFactoryWithHost() {
+          @Override
+          void unregisterEventProcessorFactoryFromHost() throws ExecutionException {
+            throw new ExecutionException(new RuntimeException());
+          }
+        };
 
     lazy.get();
     thrown.expect(RuntimeException.class);
@@ -148,12 +152,13 @@ public class LazyRegisterEventProcessorFactoryWithHostTest {
 
   @Test
   public void close_wrapsInterruptedAndSetsFlag() throws Exception {
-    LazyRegisterEventProcessorFactoryWithHost
-        lazy = new TestLazyRegisterEventProcessorFactoryWithHost() {
-      @Override void unregisterEventProcessorFactoryFromHost() throws InterruptedException {
-        throw new InterruptedException();
-      }
-    };
+    LazyRegisterEventProcessorFactoryWithHost lazy =
+        new TestLazyRegisterEventProcessorFactoryWithHost() {
+          @Override
+          void unregisterEventProcessorFactoryFromHost() throws InterruptedException {
+            throw new InterruptedException();
+          }
+        };
 
     lazy.get();
     try {
@@ -167,20 +172,22 @@ public class LazyRegisterEventProcessorFactoryWithHostTest {
   class TestLazyRegisterEventProcessorFactoryWithHost
       extends LazyRegisterEventProcessorFactoryWithHost {
     TestLazyRegisterEventProcessorFactoryWithHost() {
-      super(EventHubCollector.newBuilder()
-          .connectionString(
-              "endpoint=sb://someurl.net;SharedAccessKeyName=dumbo;SharedAccessKey=uius7y8ewychsih")
-          .storageConnectionString("UseDevelopmentStorage=true")
-          .storage(new InMemoryStorage()));
+      super(
+          EventHubCollector.newBuilder()
+              .connectionString(
+                  "endpoint=sb://someurl.net;SharedAccessKeyName=dumbo;SharedAccessKey=uius7y8ewychsih")
+              .storageConnectionString("UseDevelopmentStorage=true")
+              .storage(InMemoryStorage.newBuilder().build()));
     }
 
-    @Override Future<?> registerEventProcessorFactoryWithHost() throws Exception {
+    @Override
+    Future<?> registerEventProcessorFactoryWithHost() throws Exception {
       registration.complete("foo");
       return registration;
     }
 
-    @Override void unregisterEventProcessorFactoryFromHost()
-        throws InterruptedException, ExecutionException {
+    @Override
+    void unregisterEventProcessorFactoryFromHost() throws InterruptedException, ExecutionException {
       unregistered.set(true);
     }
   }
