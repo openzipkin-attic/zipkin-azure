@@ -34,7 +34,7 @@ Each module will also have different minimum variables that need to be set.
 
 Ex.
 ```
-$ java -Dloader.path=eventhub.jar -Dspring.profiles.active=eventhub -cp zipkin.jar org.springframework.boot.loader.PropertiesLauncher
+$ java -Dloader.path='eventhub.jar,eventhub.jar!/lib' -Dspring.profiles.active=eventhub -cp zipkin.jar org.springframework.boot.loader.PropertiesLauncher
 ```
 
 ## Example integrating the Azure Event Hub Collector
@@ -49,7 +49,7 @@ Download the [latest released server](https://search.maven.org/remote_content?g=
 
 ```
 cd /tmp
-wget -O zipkin.jar 'https://search.maven.org/remote_content?g=io.zipkin.java&a=zipkin-server&v=LATEST&c=exec'
+curl -sSL https://zipkin.io/quickstart.sh | bash -s
 ```
 
 ### Step 2: Download the latest eventhub-module jar
@@ -57,7 +57,7 @@ Download the [latest released Event Hub module](https://search.maven.org/remote_
 
 ```
 cd /tmp
-wget -O eventhub.jar 'https://search.maven.org/remote_content?g=io.zipkin.azure&a=zipkin-autoconfigure-collector-eventhub&v=LATEST&c=module'
+curl -sSL https://zipkin.io/quickstart.sh | bash -s io.zipkin.azure:zipkin-autoconfigure-collector-eventhub:LATEST:module eventhub.jar
 ```
 
 ### Step 3: Run the server with the "eventhub" profile active
@@ -68,7 +68,7 @@ short environment variables similar to other [Zipkin integrations](https://githu
 cd /tmp
 EVENTHUB_CONNECTION_STRING=Endpoint=sb://< EventHub Address>;SharedAccessKeyName=<name>;SharedAccessKey=<key> \
 EVENTHUB_STORAGE_CONNECTION_STRING=<connection string>;DefaultEndpointsProtocol=https;AccountName=<yourAccountName>;AccountKey=<yourAccountKey> \
-java -Dloader.path=eventhub.jar -Dspring.profiles.active=eventhub -cp zipkin.jar org.springframework.boot.loader.PropertiesLauncher
+java -Dloader.path='eventhub.jar,eventhub.jar!/lib' -Dspring.profiles.active=eventhub -cp zipkin.jar org.springframework.boot.loader.PropertiesLauncher
 ```
 ** NOTE: Make sure the parameters are defined in the same line or use environment variables **
 
@@ -79,5 +79,5 @@ Below command for powershell users:
 cd /tmp
 EVENTHUB_CONNECTION_STRING=Endpoint=sb://< EventHub Address>;SharedAccessKeyName=<name>;SharedAccessKey=<key>
 EVENTHUB_STORAGE_CONNECTION_STRING=<connection string>;DefaultEndpointsProtocol=https;AccountName=<yourAccountName>;AccountKey=<yourAccountKey>
-java '-Dloader.path=eventhub.jar' '-Dspring.profiles.active=eventhub' -cp zipkin.jar org.springframework.boot.loader.PropertiesLauncher
+java '-Dloader.path=eventhub.jar,eventhub.jar!/lib' '-Dspring.profiles.active=eventhub' -cp zipkin.jar org.springframework.boot.loader.PropertiesLauncher
 ```
