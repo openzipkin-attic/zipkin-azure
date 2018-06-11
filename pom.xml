@@ -14,7 +14,9 @@
     the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>io.zipkin.azure</groupId>
@@ -37,8 +39,8 @@
 
     <main.basedir>${project.basedir}</main.basedir>
 
-    <zipkin.version>2.8.3</zipkin.version>
-    <spring-boot.version>2.0.1.RELEASE</spring-boot.version>
+    <zipkin.version>2.9.1</zipkin.version>
+    <spring-boot.version>2.0.2.RELEASE</spring-boot.version>
   </properties>
 
   <name>Zipkin Azure (Parent)</name>
@@ -62,7 +64,8 @@
   <scm>
     <url>https://github.com/openzipkin/zipkin-azure</url>
     <connection>scm:git:https://github.com/openzipkin/zipkin-azure.git</connection>
-    <developerConnection>scm:git:https://github.com/openzipkin/zipkin-azure.git</developerConnection>
+    <developerConnection>scm:git:https://github.com/openzipkin/zipkin-azure.git
+    </developerConnection>
     <tag>HEAD</tag>
   </scm>
 
@@ -94,7 +97,7 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>io.zipkin.java</groupId>
+        <groupId>io.zipkin.zipkin2</groupId>
         <artifactId>zipkin</artifactId>
         <version>${zipkin.version}</version>
       </dependency>
@@ -108,8 +111,13 @@
 
   <dependencies>
     <dependency>
-      <groupId>io.zipkin.java</groupId>
+      <groupId>io.zipkin.zipkin2</groupId>
       <artifactId>zipkin</artifactId>
+      <version>${zipkin.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.zipkin.zipkin2</groupId>
+      <artifactId>zipkin-collector</artifactId>
       <version>${zipkin.version}</version>
     </dependency>
 
@@ -118,15 +126,14 @@
       <artifactId>junit</artifactId>
       <scope>test</scope>
     </dependency>
-
     <dependency>
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
-      <version>3.9.0</version>
+      <version>3.10.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>io.zipkin.java</groupId>
+      <groupId>io.zipkin.zipkin2</groupId>
       <artifactId>zipkin</artifactId>
       <version>${zipkin.version}</version>
       <type>test-jar</type>
@@ -231,6 +238,10 @@
         <version>3.0</version>
         <configuration>
           <header>${main.basedir}/src/etc/header.txt</header>
+          <mapping>
+            <!-- Don't use javadoc style as this makes code formatters break it by adding tags! -->
+            <java>SLASHSTAR_STYLE</java>
+          </mapping>
           <excludes>
             <exclude>.travis.yml</exclude>
             <exclude>appveyor.yml</exclude>

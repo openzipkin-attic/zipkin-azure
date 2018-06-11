@@ -1,5 +1,5 @@
-/**
- * Copyright 2017 The OpenZipkin Authors
+/*
+ * Copyright 2017-2018 The OpenZipkin Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -11,56 +11,69 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package zipkin.collector.eventhub;
+package zipkin2.collector.eventhub;
 
 import com.microsoft.azure.eventprocessorhost.EventProcessorHost;
 import com.microsoft.azure.eventprocessorhost.IEventProcessor;
 import com.microsoft.azure.eventprocessorhost.IEventProcessorFactory;
-import java.io.IOException;
+import com.microsoft.azure.eventprocessorhost.PartitionContext;
 import java.io.InterruptedIOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import com.microsoft.azure.eventprocessorhost.PartitionContext;
-import zipkin.internal.LazyCloseable;
-
 /**
  * This registers an event processor factory on the first call to get {@link #get()}. If an event
  * processor factory was registered, it is deregistered on {@link #close()}.
  */
 // not final for testing
-class LazyRegisterEventProcessorFactoryWithHost extends LazyCloseable<Future<?>> {
+class LazyRegisterEventProcessorFactoryWithHost {
   final EventProcessorHost host;
   final IEventProcessorFactory<?> factory;
-  final EventHubCollector.Builder builder;
   final ConcurrentMap<String, IEventProcessor> hosts = new ConcurrentHashMap<>();
+  volatile Future<?> future;
 
   LazyRegisterEventProcessorFactoryWithHost(EventHubCollector.Builder builder) {
-    this.builder = builder;
-    host = new EventProcessorHost(
+    host = newEventProcessorHost(builder);
+
+    // NOTE: for some reason using lambdas occasionally giving java.lang.NoSuchMethodError
+    // exceptions
+    factory =
+        new IEventProcessorFactory<IEventProcessor>() {
+          @Override
+          public IEventProcessor createEventProcessor(PartitionContext context) throws Exception {
+            hosts.putIfAbsent(
+                context.getPartitionId(),
+                new ZipkinEventProcessor(builder.delegate.build(), builder.checkpointBatchSize));
+            return hosts.get(context.getPartitionId());
+          }
+        };
+  }
+
+  EventProcessorHost newEventProcessorHost(EventHubCollector.Builder builder) {
+    return new EventProcessorHost(
         builder.processorHost,
         builder.name,
         builder.consumerGroup,
         builder.connectionString,
         builder.storageConnectionString,
         builder.storageContainer,
-        builder.storageBlobPrefix
-    );
-
-    // NOTE: for some reason using lambdas occasionally giving java.lang.NoSuchMethodError exceptions
-    factory = new IEventProcessorFactory<IEventProcessor>() {
-      @Override
-      public IEventProcessor createEventProcessor(PartitionContext context) throws Exception {
-        hosts.putIfAbsent(context.getPartitionId(),
-            new ZipkinEventProcessor(builder.delegate.build(), builder.checkpointBatchSize));
-        return hosts.get(context.getPartitionId());
-      }
-    };
+        builder.storageBlobPrefix);
   }
 
-  @Override protected final Future<?> compute() {
+  Future<?> get() {
+    if (future == null) {
+      synchronized (this) {
+        if (future == null) {
+          future = compute();
+        }
+      }
+    }
+    return future;
+  }
+
+  Future<?> compute() {
     try {
       return registerEventProcessorFactoryWithHost();
     } catch (RuntimeException e) {
@@ -70,8 +83,8 @@ class LazyRegisterEventProcessorFactoryWithHost extends LazyCloseable<Future<?>>
     }
   }
 
-  @Override public final void close() throws IOException {
-    Future<?> maybeNull = this.maybeNull();
+  void close() throws InterruptedIOException {
+    Future<?> maybeNull = future;
     if (maybeNull == null) return;
     try {
       maybeNull.cancel(true);
