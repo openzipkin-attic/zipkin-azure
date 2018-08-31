@@ -38,8 +38,8 @@
     <main.basedir>${project.basedir}</main.basedir>
 
     <!-- must match (ex. use spring-boot used by zipkin-server) -->
-    <zipkin.version>2.10.4</zipkin.version>
-    <spring-boot.version>2.0.3.RELEASE</spring-boot.version>
+    <zipkin.version>2.11.4</zipkin.version>
+    <spring-boot.version>2.0.4.RELEASE</spring-boot.version>
 
     <maven-failsafe-plugin.version>2.22.0</maven-failsafe-plugin.version>
   </properties>
@@ -189,7 +189,7 @@
       <plugin>
         <inherited>true</inherited>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.7.0</version>
+        <version>3.8.0</version>
         <configuration>
           <!-- Retrolambda will rewrite lambdas as Java 6 bytecode -->
           <source>1.8</source>
