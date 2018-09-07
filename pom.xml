@@ -38,7 +38,7 @@
     <main.basedir>${project.basedir}</main.basedir>
 
     <!-- must match (ex. use spring-boot used by zipkin-server) -->
-    <zipkin.version>2.11.4</zipkin.version>
+    <zipkin.version>2.11.5</zipkin.version>
     <spring-boot.version>2.0.4.RELEASE</spring-boot.version>
 
     <maven-failsafe-plugin.version>2.22.0</maven-failsafe-plugin.version>
