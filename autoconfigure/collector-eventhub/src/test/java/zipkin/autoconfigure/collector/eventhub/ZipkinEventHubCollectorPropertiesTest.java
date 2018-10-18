@@ -76,7 +76,7 @@ public class ZipkinEventHubCollectorPropertiesTest {
 
     assertThat(context.getBean(ZipkinEventHubCollectorProperties.class))
         .extracting(extractor)
-        .containsExactly(value);
+        .isEqualTo(value);
   }
 
   @Configuration
