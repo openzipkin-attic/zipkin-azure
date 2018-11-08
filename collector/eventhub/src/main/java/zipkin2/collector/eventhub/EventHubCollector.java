@@ -1,5 +1,5 @@
-/**
- * Copyright 2017 The OpenZipkin Authors
+/*
+ * Copyright 2017-2018 The OpenZipkin Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -11,28 +11,28 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package zipkin.collector.eventhub;
+package zipkin2.collector.eventhub;
 
 import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
-import zipkin.collector.Collector;
-import zipkin.collector.CollectorComponent;
-import zipkin.collector.CollectorMetrics;
-import zipkin.collector.CollectorSampler;
-import zipkin.internal.LazyCloseable;
-import zipkin.storage.StorageComponent;
+import zipkin2.CheckResult;
+import zipkin2.collector.Collector;
+import zipkin2.collector.CollectorComponent;
+import zipkin2.collector.CollectorMetrics;
+import zipkin2.collector.CollectorSampler;
+import zipkin2.storage.StorageComponent;
 
-public final class EventHubCollector implements CollectorComponent {
+public final class EventHubCollector extends CollectorComponent {
 
   public static Builder newBuilder() {
     return new Builder();
   }
 
-  public static final class Builder implements CollectorComponent.Builder {
-    Collector.Builder delegate = Collector.builder(EventHubCollector.class);
+  public static final class Builder extends CollectorComponent.Builder {
+    Collector.Builder delegate = Collector.newBuilder(EventHubCollector.class);
     String name = "zipkin";
     String consumerGroup = "$Default";
     String connectionString;
@@ -42,8 +42,7 @@ public final class EventHubCollector implements CollectorComponent {
     String storageContainer = "zipkin";
     String storageBlobPrefix = "zipkin_checkpoint_store"; // TODO: integration testing
 
-    Builder() {
-    }
+    Builder() {}
 
     public Builder name(String name) {
       this.name = name;
@@ -85,43 +84,50 @@ public final class EventHubCollector implements CollectorComponent {
       return this;
     }
 
-    @Override public Builder storage(StorageComponent storage) {
+    @Override
+    public Builder storage(StorageComponent storage) {
       delegate.storage(storage);
       return this;
     }
 
-    @Override public Builder metrics(CollectorMetrics metrics) {
+    @Override
+    public Builder metrics(CollectorMetrics metrics) {
       delegate.metrics(metrics);
       return this;
     }
 
-    @Override public Builder sampler(CollectorSampler sampler) {
+    @Override
+    public Builder sampler(CollectorSampler sampler) {
       delegate.sampler(sampler);
       return this;
     }
 
-    @Override public EventHubCollector build() {
+    @Override
+    public EventHubCollector build() {
       return new EventHubCollector(this);
     }
   }
 
   final AtomicBoolean closed = new AtomicBoolean(false);
-  final LazyCloseable<Future<?>> lazyRegisterEventProcessorFactoryWithHost;
+  final LazyRegisterEventProcessorFactoryWithHost lazyRegisterEventProcessorFactoryWithHost;
 
   EventHubCollector(Builder builder) {
     this(new LazyRegisterEventProcessorFactoryWithHost(builder));
   }
 
-  EventHubCollector(LazyCloseable<Future<?>> lazyRegisterEventProcessorFactoryWithHost) {
+  EventHubCollector(
+      LazyRegisterEventProcessorFactoryWithHost lazyRegisterEventProcessorFactoryWithHost) {
     this.lazyRegisterEventProcessorFactoryWithHost = lazyRegisterEventProcessorFactoryWithHost;
   }
 
-  @Override public EventHubCollector start() {
+  @Override
+  public EventHubCollector start() {
     if (!closed.get()) lazyRegisterEventProcessorFactoryWithHost.get();
     return this;
   }
 
-  @Override public CheckResult check() {
+  @Override
+  public CheckResult check() {
     try {
       // make sure compute doesn't throw an exception
       Future<?> registrationFuture = lazyRegisterEventProcessorFactoryWithHost.get();
@@ -135,11 +141,12 @@ public final class EventHubCollector implements CollectorComponent {
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       if (cause instanceof Error) throw (Error) cause;
-      return CheckResult.failed((Exception) cause);
+      return CheckResult.failed(cause);
     }
   }
 
-  @Override public void close() throws IOException {
+  @Override
+  public void close() throws IOException {
     if (!closed.compareAndSet(false, true)) return;
     lazyRegisterEventProcessorFactoryWithHost.close();
   }

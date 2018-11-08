@@ -17,7 +17,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <groupId>io.zipkin.azure</groupId>
-    <version>0.3.10-SNAPSHOT</version>
+    <version>0.7.3-SNAPSHOT</version>
     <artifactId>zipkin-autoconfigure-parent</artifactId>
   </parent>
   <modelVersion>4.0.0</modelVersion>
@@ -36,15 +36,10 @@
   </dependencies>
   <build>
     <plugins>
-       <plugin>
+      <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
-        <version>${spring-boot.version}</version>
         <configuration>
-          <layoutFactory implementation="zipkin.layout.ZipkinLayoutFactory">
-            <name>custom</name>
-          </layoutFactory>
-          <classifier>module</classifier>
           <!-- https://github.com/spring-projects/spring-boot/issues/3426 transitive exclude doesn't work -->
           <excludeGroupIds>
             io.zipkin.java,org.springframework.boot,org.springframework,commons-codec,com.fasterxml.jackson.core,com.fasterxml.jackson.dataformat,org.apache.httpcomponents,commons-logging,joda-time,software.amazon.ion
@@ -52,13 +47,6 @@
           <!-- already packaged in zipkin-server -->
           <excludeArtifactIds>jmespath-java</excludeArtifactIds>
         </configuration>
-        <dependencies>
-          <dependency>
-            <groupId>io.zipkin.layout</groupId>
-            <artifactId>zipkin-layout-factory</artifactId>
-            <version>0.0.2</version>
-          </dependency>
-        </dependencies>
       </plugin>
     </plugins>
   </build>

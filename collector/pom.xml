@@ -20,7 +20,7 @@
   <parent>
     <groupId>io.zipkin.azure</groupId>
     <artifactId>zipkin-azure-parent</artifactId>
-    <version>0.3.10-SNAPSHOT</version>
+    <version>0.7.3-SNAPSHOT</version>
   </parent>
 
   <artifactId>zipkin-collector-parent</artifactId>
@@ -34,4 +34,12 @@
   <modules>
     <module>eventhub</module>
   </modules>
+
+  <dependencies>
+    <dependency>
+      <groupId>io.zipkin.zipkin2</groupId>
+      <artifactId>zipkin-collector</artifactId>
+      <version>${zipkin.version}</version>
+    </dependency>
+  </dependencies>
 </project>

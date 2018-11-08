@@ -1,5 +1,5 @@
-/**
- * Copyright 2017 The OpenZipkin Authors
+/*
+ * Copyright 2017-2018 The OpenZipkin Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -21,23 +21,25 @@ import org.springframework.context.annotation.ConditionContext;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.type.AnnotatedTypeMetadata;
-import zipkin.collector.CollectorMetrics;
-import zipkin.collector.CollectorSampler;
-import zipkin.collector.eventhub.EventHubCollector;
-import zipkin.storage.StorageComponent;
+import zipkin2.collector.CollectorMetrics;
+import zipkin2.collector.CollectorSampler;
+import zipkin2.collector.eventhub.EventHubCollector;
+import zipkin2.storage.StorageComponent;
 
 @Configuration
 @EnableConfigurationProperties(ZipkinEventHubCollectorProperties.class)
 @Conditional(ZipkinEventHubCollectorAutoConfiguration.EventHubSetCondition.class)
-public class ZipkinEventHubCollectorAutoConfiguration {
+class ZipkinEventHubCollectorAutoConfiguration {
 
   @Bean
-  EventHubCollector eventHubCollector(ZipkinEventHubCollectorProperties properties,
+  EventHubCollector eventHubCollector(
+      ZipkinEventHubCollectorProperties properties,
       CollectorSampler sampler,
       CollectorMetrics metrics,
       StorageComponent storage) {
 
-    return properties.toBuilder()
+    return properties
+        .toBuilder()
         .sampler(sampler)
         .storage(storage)
         .metrics(metrics)
@@ -52,12 +54,12 @@ public class ZipkinEventHubCollectorAutoConfiguration {
     public ConditionOutcome getMatchOutcome(ConditionContext context, AnnotatedTypeMetadata a) {
 
       String eventHubProperty = context.getEnvironment().getProperty(PROPERTY_NAME);
-      ConditionOutcome outcome = eventHubProperty == null || eventHubProperty.isEmpty() ?
-          ConditionOutcome.noMatch(PROPERTY_NAME + " isn't set") :
-          ConditionOutcome.match();
+      ConditionOutcome outcome =
+          eventHubProperty == null || eventHubProperty.isEmpty()
+              ? ConditionOutcome.noMatch(PROPERTY_NAME + " isn't set")
+              : ConditionOutcome.match();
 
       return outcome;
     }
   }
 }
-
