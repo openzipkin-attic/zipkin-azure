@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 The OpenZipkin Authors
+ * Copyright 2017-2018 The OpenZipkin Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -18,7 +18,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
-import org.springframework.boot.autoconfigure.PropertyPlaceholderAutoConfiguration;
+import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration;
+import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,7 +31,6 @@ import zipkin.storage.InMemoryStorage;
 import zipkin.storage.StorageComponent;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.boot.test.util.EnvironmentTestUtils.addEnvironment;
 
 public class ZipkinEventHubCollectorAutoConfigurationTest {
   static final String CONNECTION_STRING =
@@ -62,11 +62,10 @@ public class ZipkinEventHubCollectorAutoConfigurationTest {
 
   @Test
   public void providesCollectorComponent_whenConnectionStringsSet() {
-    addEnvironment(context,
-        "zipkin.collector.eventhub.connection-string:" + CONNECTION_STRING);
-    addEnvironment(context,
+    TestPropertyValues.of(
+        "zipkin.collector.eventhub.connection-string:" + CONNECTION_STRING,
         "zipkin.collector.eventhub.storage.connection-string:"
-            + STORAGE_CONNECTION_STRING);
+            + STORAGE_CONNECTION_STRING).applyTo(context);
     context.register(
         PropertyPlaceholderAutoConfiguration.class,
         ZipkinEventHubCollectorAutoConfiguration.class,

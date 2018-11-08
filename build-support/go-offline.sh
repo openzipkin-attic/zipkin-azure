@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright 2017 The OpenZipkin Authors
+# Copyright 2017-2018 The OpenZipkin Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
@@ -15,7 +15,7 @@
 
 # Due to https://issues.apache.org/jira/browse/MDEP-323 and cross-module dependencies,
 # we can't easily run mvn dependency:go-offline. This is a workaround for that.
-# It removes all dependencies on io.zipkin.java and ${project.groupId} using XSLT,
+# It removes all dependencies on io.zipkin.zipkin2 and ${project.groupId} using XSLT,
 # then runs go-offline on the resulting POMs.
 
 set -xeuo pipefail

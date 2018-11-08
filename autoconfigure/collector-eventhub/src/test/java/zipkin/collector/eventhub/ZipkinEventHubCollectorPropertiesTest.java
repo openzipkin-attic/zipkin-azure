@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 The OpenZipkin Authors
+ * Copyright 2017-2018 The OpenZipkin Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -19,14 +19,15 @@ import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.springframework.boot.autoconfigure.PropertyPlaceholderAutoConfiguration;
+
+import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import zipkin.autoconfigure.collector.eventhub.ZipkinEventHubCollectorProperties;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.boot.test.util.EnvironmentTestUtils.addEnvironment;
 
 @RunWith(Parameterized.class)
 public class ZipkinEventHubCollectorPropertiesTest {
@@ -63,7 +64,7 @@ public class ZipkinEventHubCollectorPropertiesTest {
 
   @Test
   public void canOverrideValueOf() {
-    addEnvironment(context, property + ":" + value);
+    TestPropertyValues.of(property + ":" + value).applyTo(context);
 
     context.register(
         PropertyPlaceholderAutoConfiguration.class,
