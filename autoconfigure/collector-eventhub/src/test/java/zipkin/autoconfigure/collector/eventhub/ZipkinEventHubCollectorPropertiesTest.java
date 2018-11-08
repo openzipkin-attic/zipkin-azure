@@ -21,11 +21,11 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Configuration;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.boot.test.util.EnvironmentTestUtils.addEnvironment;
 
 @RunWith(Parameterized.class)
 public class ZipkinEventHubCollectorPropertiesTest {
@@ -68,7 +68,7 @@ public class ZipkinEventHubCollectorPropertiesTest {
 
   @Test
   public void canOverrideValueOf() {
-    addEnvironment(context, property + ":" + value);
+    TestPropertyValues.of(property + ":" + value).applyTo(context);
 
     context.register(
         PropertyPlaceholderAutoConfiguration.class, EnableEventHubCollectorProperties.class);
