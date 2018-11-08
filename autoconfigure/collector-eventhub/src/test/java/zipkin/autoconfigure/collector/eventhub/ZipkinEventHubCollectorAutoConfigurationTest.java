@@ -19,6 +19,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration;
+import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,7 +30,6 @@ import zipkin2.storage.InMemoryStorage;
 import zipkin2.storage.StorageComponent;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.boot.test.util.EnvironmentTestUtils.addEnvironment;
 
 public class ZipkinEventHubCollectorAutoConfigurationTest {
   static final String CONNECTION_STRING =
@@ -59,10 +59,9 @@ public class ZipkinEventHubCollectorAutoConfigurationTest {
 
   @Test
   public void providesCollectorComponent_whenConnectionStringsSet() {
-    addEnvironment(context, "zipkin.collector.eventhub.connection-string:" + CONNECTION_STRING);
-    addEnvironment(
-        context,
-        "zipkin.collector.eventhub.storage.connection-string:" + STORAGE_CONNECTION_STRING);
+    TestPropertyValues.of(
+      "zipkin.collector.eventhub.connection-string:" + CONNECTION_STRING,
+      "zipkin.collector.eventhub.storage.connection-string:" + STORAGE_CONNECTION_STRING).applyTo(context);
     context.register(
         PropertyPlaceholderAutoConfiguration.class,
         ZipkinEventHubCollectorAutoConfiguration.class,
